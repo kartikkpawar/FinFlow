@@ -9,6 +9,7 @@
   "license": "ISC",
   "description": "Auth service to manage login, logout, refresh-token, password reset, email verification and session/token",
   "dependencies": {
+    "@finflow/shared": "^1.0.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
