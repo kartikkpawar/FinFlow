@@ -26,12 +26,6 @@ export const usersTable = pgTable("users", {
   password_hash: varchar({ length: 255 }).notNull(),
   account_locked: boolean("account_locked").default(true).notNull(),
   refresh_token: varchar("refresh_token", { length: 1024 }),
-  refresh_token_expires: timestamp("expires_at", {
-    withTimezone: true,
-  })
-    .default(sql`NOW() + INTERVAL '7 days'`)
-    .notNull(),
-  max_refresh_token: integer("max_refresh_token").default(4).notNull(),
   login_attempts: integer("login_attempts").default(3).notNull(),
   role: userRoleEnums(),
   created_at: timestamp("created_at").notNull().defaultNow(),
