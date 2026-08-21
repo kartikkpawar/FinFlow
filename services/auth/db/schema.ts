@@ -1,14 +1,15 @@
 import { sql } from "drizzle-orm";
 import {
-  integer,
-  pgTable,
-  varchar,
-  pgEnum,
   boolean,
+  integer,
+  pgEnum,
+  pgTable,
   timestamp,
+  uuid,
+  varchar,
 } from "drizzle-orm/pg-core";
 
-export const userRoleEnums = pgEnum("role", [
+export const userRoleEnum = pgEnum("role", [
   "SUPER_ADMIN",
   "ADMIN",
   "MERCHANT_ADMIN",
@@ -18,16 +19,56 @@ export const userRoleEnums = pgEnum("role", [
 ]);
 
 export const usersTable = pgTable("users", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  name: varchar({ length: 255 }).notNull(),
-  email: varchar({ length: 255 }).notNull().unique(),
-  email_verified: boolean("email_verified").default(true).notNull(),
-  phone: varchar({ length: 15 }).notNull().unique(),
-  password_hash: varchar({ length: 255 }).notNull(),
-  account_locked: boolean("account_locked").default(true).notNull(),
-  refresh_token: varchar("refresh_token", { length: 1024 }),
-  login_attempts: integer("login_attempts").default(3).notNull(),
-  role: userRoleEnums(),
-  created_at: timestamp("created_at").notNull().defaultNow(),
-  modified_at: timestamp("modified_at").notNull().defaultNow(),
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  emailVerified: boolean("email_verified").default(false).notNull(),
+  phone: varchar("phone", { length: 15 }).notNull().unique(),
+  passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+  accountLocked: boolean("account_locked").default(false).notNull(),
+  loginAttempts: integer("login_attempts").default(3).notNull(),
+  role: userRoleEnum("role").default("MERCHANT_USER").notNull(),
+
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+  })
+    .defaultNow()
+    .notNull(),
+
+  modifiedAt: timestamp("modified_at", {
+    withTimezone: true,
+  })
+    .defaultNow()
+    .notNull(),
+});
+
+export const sessions = pgTable("sessions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => usersTable.id),
+
+  refreshTokenHash: varchar("refresh_token_hash", {
+    length: 255,
+  }).notNull(),
+
+  expiresAt: timestamp("expires_at", {
+    withTimezone: true,
+  })
+    .default(sql`NOW() + INTERVAL '7 days'`)
+    .notNull(),
+
+  revokedAt: timestamp("revoked_at", {
+    withTimezone: true,
+  }),
+
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+  })
+    .defaultNow()
+    .notNull(),
+
+  lastUsedAt: timestamp("last_used_at", {
+    withTimezone: true,
+  }),
 });
