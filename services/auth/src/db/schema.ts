@@ -1,9 +1,11 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  index,
   integer,
   pgEnum,
   pgTable,
+  text,
   timestamp,
   uuid,
   varchar,
@@ -18,7 +20,7 @@ export const userRoleEnum = pgEnum("role", [
   "SUPPORT",
 ]);
 
-export const usersTable = pgTable("users", {
+export const users = pgTable("users", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
@@ -46,7 +48,7 @@ export const sessions = pgTable("sessions", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: integer("user_id")
     .notNull()
-    .references(() => usersTable.id),
+    .references(() => users.id),
 
   refreshTokenHash: varchar("refresh_token_hash", {
     length: 255,
@@ -72,3 +74,34 @@ export const sessions = pgTable("sessions", {
     withTimezone: true,
   }),
 });
+
+export const emailVerificationTokens = pgTable(
+  "email_verification_tokens",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, {
+        onDelete: "cascade",
+      }),
+
+    tokenHash: text("token_hash").notNull(),
+
+    expiresAt: timestamp("expires_at", {
+      withTimezone: true,
+    }).notNull(),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .defaultNow()
+      .notNull(),
+  },
+
+  (table) => [index("idx_email_verification_tokens_user_id").on(table.userId)],
+);
+
+export type User = typeof users.$inferSelect;
+export type Session = typeof sessions.$inferSelect;
+export type EmailVerificationHash = typeof emailVerificationTokens.$inferSelect;
