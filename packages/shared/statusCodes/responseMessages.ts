@@ -14,6 +14,8 @@ export const responseMessage = {
     PASSWORD_EXPIRED: "Password has expired",
     PASSWORD_ALREADY_USED: "Password has already been used",
     PASSWORD_RESET_TOKEN_INVALID: "Invalid or expired password reset token",
+    EMAIL_VERIFIED: "Email verified successfully",
+    EMAIL_ALREADY_VERIFIED: "Email already verified. Please login to continue",
   },
 
   USER: {

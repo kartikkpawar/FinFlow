@@ -51,14 +51,26 @@ export async function signJwt(
 }
 
 export function verifyToken(token: string): UserPayload {
-  const decodedToken = jwt.verify(token, getJWTSecret());
-  if (typeof decodedToken !== "object" || decodedToken === null) {
-    throw new Error("Invalid Token Payload");
-  }
+  try {
+    const decodedToken = jwt.verify(token, getJWTSecret());
+    if (typeof decodedToken !== "object" || decodedToken === null) {
+      throw new Error("Invalid Token Payload");
+    }
 
-  return {
-    userId: decodedToken.userId,
-    role: decodedToken.role,
-    email: decodedToken.email,
-  };
+    return {
+      userId: decodedToken.userId,
+      role: decodedToken.role,
+      email: decodedToken.email,
+    };
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      throw new Error("Token expired");
+    }
+
+    if (error instanceof jwt.JsonWebTokenError) {
+      throw new Error("Invalid token");
+    }
+
+    throw error;
+  }
 }
