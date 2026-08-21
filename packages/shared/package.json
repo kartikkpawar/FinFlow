@@ -1,13 +1,15 @@
 {
   "name": "@finflow/shared",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "main": "index.js",
   "exports": "./index.js",
   "private": true,
   "devDependencies": {
-    "@types/express": "^5.0.6"
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.2.0"
   },
   "dependencies": {
+    "jsonwebtoken": "^9.0.3",
     "pino": "^10.3.1",
     "pino-http": "^11.0.0",
     "zod": "^4.4.3"

@@ -8,6 +8,7 @@ import {
 } from "@finflow/shared";
 
 import express from "express";
+import authRoutes from "./routes/auth.routes";
 
 const PORT = process.env.PORT || 3002;
 
@@ -19,6 +20,8 @@ app.use(express.json());
 app.get("/health", (req, res) => {
   successResponse(res, { service: "auth-service" });
 });
+
+app.use("/auth", authRoutes);
 
 app.use((_req, _res, next) => {
   next(new AppError(400, "Route Not Found"));

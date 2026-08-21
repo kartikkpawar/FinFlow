@@ -1,11 +1,14 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
     "rootDir": "src",
     "outDir": "dist",
     "sourceMap": true,
-    "types": ["node"]
+    "types": ["node"],
+    "module": "CommonJS",
+    "moduleResolution": "Node"
   },
-  "include": ["src/**/*.ts", "drizzle.config.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

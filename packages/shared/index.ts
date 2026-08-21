@@ -14,3 +14,6 @@ export { validateBody } from "./validation/index";
 // status codes and response messages
 export { STATUS_CODES } from "./statusCodes/respCodes";
 export { responseMessage } from "./statusCodes/responseMessages";
+
+// jwt token
+export { signJwt, verifyToken } from "./jwt-auth";
