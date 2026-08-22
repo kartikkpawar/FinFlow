@@ -16,6 +16,7 @@ export const responseMessage = {
     PASSWORD_RESET_TOKEN_INVALID: "Invalid or expired password reset token",
     EMAIL_VERIFIED: "Email verified successfully",
     EMAIL_ALREADY_VERIFIED: "Email already verified. Please login to continue",
+    EMAIL_NOT_VERIFIED: "Email not verified. Please check inbox",
   },
 
   USER: {

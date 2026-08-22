@@ -34,7 +34,10 @@ export async function verifyEmail(
       .where(and(eq(users.id, userId), eq(users.emailVerified, true)));
 
     if (alreadyVerifiedUser.length) {
-      return successResponse(res, responseMessage.AUTH.EMAIL_ALREADY_VERIFIED);
+      return successResponse(res, {
+        message: responseMessage.AUTH.EMAIL_ALREADY_VERIFIED,
+        tag: "EMAIL_ALREADY_VERIFIED",
+      });
     }
 
     await db
@@ -44,7 +47,10 @@ export async function verifyEmail(
       })
       .where(and(eq(users.id, userId), eq(users.emailVerified, false)));
 
-    successResponse(res, responseMessage.AUTH.EMAIL_VERIFIED);
+    successResponse(res, {
+      message: responseMessage.AUTH.EMAIL_VERIFIED,
+      tag: "EMAIL_VERIFIED",
+    });
   } catch (error: any) {
     next(
       new AppError(
