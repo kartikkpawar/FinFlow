@@ -1,4 +1,6 @@
 import jwt from "jsonwebtoken";
+import { randomBytes } from "node:crypto";
+import crypto from "node:crypto";
 
 type UserRole =
   | "SUPER_ADMIN"
@@ -25,7 +27,7 @@ function getJWTSecret(): string {
 
 export async function signJwt(
   data: UserPayload & {
-    purpose: "email_verification" | "auth_login" | "auth_refresh";
+    purpose: "email_verification" | "auth_login";
   },
 ) {
   const jwtSecret = getJWTSecret();
@@ -73,4 +75,12 @@ export function verifyToken(token: string): UserPayload {
 
     throw error;
   }
+}
+
+export function generateRefrehToken() {
+  return randomBytes(64).toString("hex");
+}
+
+export function hashRefreshToken(token: string) {
+  return crypto.createHash("sha256").update(token).digest("hex");
 }

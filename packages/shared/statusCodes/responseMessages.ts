@@ -17,6 +17,7 @@ export const responseMessage = {
     EMAIL_VERIFIED: "Email verified successfully",
     EMAIL_ALREADY_VERIFIED: "Email already verified. Please login to continue",
     EMAIL_NOT_VERIFIED: "Email not verified. Please check inbox",
+    LOGIN_SUCCESS: "User logged in successfully",
   },
 
   USER: {
