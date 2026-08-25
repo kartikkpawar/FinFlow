@@ -5,6 +5,7 @@ import {
   responseMessage,
   successResponse,
   signJwt,
+  asyncHandler,
 } from "@finflow/shared";
 import { db } from "../db/index.js";
 import { users, UserRole } from "../db/schema.js";
@@ -12,12 +13,8 @@ import { eq, or } from "drizzle-orm";
 import { CreateUserInput } from "../schemas/index.js";
 import bcryptjs from "bcryptjs";
 
-export async function registerUser(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
-  try {
+export const registerUser = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
     const { email, phone, name, password } = req.body as CreateUserInput;
 
     const user = await db
@@ -74,7 +71,5 @@ export async function registerUser(
     );
 
     // TODO: Send Email to verify
-  } catch (error) {
-    next(error);
-  }
-}
+  },
+);

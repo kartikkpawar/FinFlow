@@ -3,6 +3,7 @@ import { db } from "../db/index.js";
 import { and, eq, or } from "drizzle-orm";
 import {
   AppError,
+  asyncHandler,
   responseMessage,
   STATUS_CODES,
   successResponse,
@@ -10,12 +11,8 @@ import {
 } from "@finflow/shared";
 import { users } from "../db/schema.js";
 
-export async function verifyEmail(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
-  try {
+export const verifyEmail = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
     const token = req.query.token;
 
     if (!token) {
@@ -51,12 +48,5 @@ export async function verifyEmail(
       message: responseMessage.AUTH.EMAIL_VERIFIED,
       tag: "EMAIL_VERIFIED",
     });
-  } catch (error: any) {
-    next(
-      new AppError(
-        STATUS_CODES["INTERNAL_SERVER_ERROR"],
-        error?.message || responseMessage.GENERAL.SOMETHING_WENT_WRONG,
-      ),
-    );
-  }
-}
+  },
+);
