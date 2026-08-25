@@ -30,4 +30,13 @@ export const createUserSchema = z.object({
   role: userRoleSchema.default("MERCHANT_USER"),
 });
 
+export const loginSchema = z.object({
+  email: z
+    .email("Invalid email address")
+    .transform((email) => email.toLowerCase()),
+
+  password: z.string().min(1, "Password is required"),
+});
+
 export type CreateUserInput = z.infer<typeof createUserSchema>;
+export type loginSchemaInput = z.infer<typeof loginSchema>;
