@@ -20,6 +20,7 @@ export const responseMessage = {
     LOGIN_SUCCESS: "User logged in successfully",
     LOGOUT_SUCCESS: "User logged out successfully",
     SESSION_REVOKED: "Session has been revoked",
+    PASSWORD_CHANGED: "Password changed successfully",
   },
 
   USER: {

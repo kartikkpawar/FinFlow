@@ -6,6 +6,7 @@ import { verifyEmail } from "../controllers/emailVerification";
 import { loginUser } from "../controllers/loginUser";
 import { refreshAccessToken } from "../controllers/refreshAccessToken";
 import { logout } from "../controllers/logout";
+import { resetPassword } from "../controllers/resetPassword";
 
 const router = Router();
 
@@ -14,5 +15,6 @@ router.get("/verify-email", verifyEmail);
 router.post("/login", validateBody(loginSchema), loginUser);
 router.post("/refresh-access-token", refreshAccessToken);
 router.get("/logout", logout);
+router.patch("/reset-password", resetPassword);
 
 export default router;
