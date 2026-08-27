@@ -23,4 +23,6 @@ export {
   hashRefreshToken,
 } from "./auth";
 
+export type { UserPayload } from "./auth";
+
 export { asyncHandler } from "./asyncHandler";

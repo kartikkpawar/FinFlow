@@ -10,7 +10,7 @@ type UserRole =
   | "ANALYST"
   | "SUPPORT";
 
-type UserPayload = {
+export type UserPayload = {
   userId: number;
   email: string;
   role: UserRole;
