@@ -45,5 +45,6 @@ export const responseMessage = {
   GENERAL: {
     SOMETHING_WENT_WRONG:
       "Something went wrong, Please contact your administrator",
+    EMAIL_SENT: "Email sent successfully",
   },
 };

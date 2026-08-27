@@ -27,7 +27,7 @@ function getJWTSecret(): string {
 
 export async function signJwt(
   data: UserPayload & {
-    purpose: "email_verification" | "auth_login";
+    purpose: "email_verification" | "auth_login" | "password_reset";
   },
 ) {
   const jwtSecret = getJWTSecret();
@@ -35,7 +35,7 @@ export async function signJwt(
   const expiresIn = {
     email_verification: process.env.JWT_EXPIRES_IN_EMAIL_VERIFICATION,
     auth_login: process.env.JWT_EXPIRES_IN_LOGIN,
-    auth_refresh: process.env.JWT_EXPIRES_IN_REFRESH_TOKEN,
+    password_reset: process.env.JWT_PASSWORD_RESET,
   };
 
   return jwt.sign(
