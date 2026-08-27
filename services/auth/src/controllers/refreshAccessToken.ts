@@ -91,6 +91,7 @@ export const refreshAccessToken = asyncHandler(
     });
     return successResponse(res, {
       accessToken,
+      tag: "ACCESS_TOKEN",
     });
   },
 );
