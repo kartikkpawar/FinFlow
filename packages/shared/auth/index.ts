@@ -116,14 +116,15 @@ export function verifyGatewaySecret(
 
 export function getIdentityHeaders(req: Request) {
   const userId = req.headers["x-user-id"];
-  const userRole = req.headers["x-user-role"];
+  const role = req.headers["x-user-role"];
+  const email = req.headers["x-user-email"];
 
-  if (!userId || !userRole) {
+  if (!userId || !role || !email) {
     throw new AppError(
       STATUS_CODES.BAD_REQUEST,
       responseMessage.AUTH.INVALID_HEADERS,
     );
   }
 
-  return { userId, userRole };
+  return { userId: Number(userId), role: String(role), email: String(email) };
 }
