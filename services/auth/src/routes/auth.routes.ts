@@ -18,7 +18,7 @@ router.post("/register", validateBody(createUserSchema), registerUser);
 router.get("/verify-email", verifyEmail);
 router.post("/login", validateBody(loginSchema), loginUser);
 router.post("/refresh-access-token", refreshAccessToken);
-router.get("/logout", logout);
+router.post("/logout", logout);
 router.patch("/reset-password", resetPassword);
 router.get("/forgot-password", sendForgotPasswordEmail);
 router.patch("/forgot-password", forgotPassword);

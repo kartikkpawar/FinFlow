@@ -1,4 +1,4 @@
-import "dotenv/config";
+import { config } from "dotenv";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -11,8 +11,12 @@ import {
   logger,
   successResponse,
 } from "@finflow/shared";
+import { resolve } from "node:path";
 
-const PORT = process.env.PORT || 3001;
+config({ path: resolve(process.cwd(), ".env") });
+config({ path: resolve(process.cwd(), "../.env") });
+
+const PORT = process.env.API_GATEWAY_PORT || 3001;
 
 // Services config urls
 const AUTH_SERVICE_URL =
@@ -54,5 +58,5 @@ app.use((_req, _res, next) => {
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  logger.info(`AUTH-SERVICE: Listening on port: ${PORT}`);
+  logger.info(`API-GATEWAY-SERVICE: Listening on port: ${PORT}`);
 });

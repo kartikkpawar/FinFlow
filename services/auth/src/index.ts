@@ -1,4 +1,4 @@
-import "dotenv/config";
+import { config } from "dotenv";
 import {
   AppError,
   errorHandler,
@@ -10,7 +10,12 @@ import {
 import express from "express";
 import authRoutes from "./routes/auth.routes";
 
-const PORT = process.env.PORT || 3002;
+import { resolve } from "node:path";
+
+config({ path: resolve(process.cwd(), ".env") });
+config({ path: resolve(process.cwd(), "../.env") });
+
+const PORT = process.env.AUTH_SERVICE_PORT || 3002;
 
 const app = express();
 
