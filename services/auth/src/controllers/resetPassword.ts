@@ -1,6 +1,7 @@
 import {
   AppError,
   asyncHandler,
+  getIdentityHeaders,
   responseMessage,
   STATUS_CODES,
   successResponse,
@@ -12,13 +13,7 @@ import { eq } from "drizzle-orm";
 import bcryptjs from "bcryptjs";
 
 export const resetPassword = asyncHandler(async (req, res, next) => {
-  const userId = req.user?.userId;
-  if (!userId) {
-    throw new AppError(
-      STATUS_CODES.UNAUTHORIZED,
-      responseMessage.AUTH.INVALID_TOKEN,
-    );
-  }
+  const { userId } = getIdentityHeaders(req);
 
   const [user] = await db
     .select({ currentPassword: users.passwordHash })

@@ -4,6 +4,7 @@ import { and, eq, or } from "drizzle-orm";
 import {
   AppError,
   asyncHandler,
+  getIdentityHeaders,
   hashRefreshToken,
   responseMessage,
   STATUS_CODES,
@@ -15,13 +16,7 @@ import { sessions } from "../db/schema.js";
 export const logout = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const logoutAll = req.query.type === "all";
-    const userId = req.user?.userId;
-    if (!userId) {
-      throw new AppError(
-        STATUS_CODES.BAD_REQUEST,
-        responseMessage.USER.NOT_FOUND,
-      );
-    }
+    const { userId } = getIdentityHeaders(req);
 
     const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) {

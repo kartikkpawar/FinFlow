@@ -6,6 +6,7 @@ import {
   STATUS_CODES,
   successResponse,
   verifyToken,
+  getIdentityHeaders,
 } from "@finflow/shared";
 import { UserRole, users } from "../db/schema";
 import bcryptjs from "bcryptjs";
@@ -13,14 +14,7 @@ import { db } from "../db";
 import { eq } from "drizzle-orm";
 
 export const sendForgotPasswordEmail = asyncHandler(async (req, res, next) => {
-  if (!Object.keys(req?.user || {}).length || !req?.user || !req.user.userId) {
-    throw new AppError(
-      STATUS_CODES.UNAUTHORIZED,
-      responseMessage.AUTH.INVALID_TOKEN,
-    );
-  }
-
-  const { role, email, userId } = req.user;
+  const { role, email, userId } = getIdentityHeaders(req);
 
   const passwordResetToken = await signJwt({
     email,
