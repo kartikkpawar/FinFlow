@@ -23,9 +23,10 @@ export {
   hashRefreshToken,
   getIdentityHeaders,
   verifyGatewaySecret,
-  hasPermission,
+  requirePermission,
 } from "./auth";
 
 export type { UserPayload } from "./auth";
+export type { PERMISSIONS } from "./auth/type";
 
 export { asyncHandler } from "./asyncHandler";

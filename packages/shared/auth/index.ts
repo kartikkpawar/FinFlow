@@ -130,7 +130,7 @@ export function getIdentityHeaders(req: Request) {
   return { userId: Number(userId), role: String(role), email: String(email) };
 }
 
-export const hasPermission = (
+export const requirePermission = (
   req: Request,
   requiredPermission: RolePermission,
 ): boolean => {
