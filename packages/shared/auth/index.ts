@@ -1,6 +1,10 @@
+import { NextFunction, Request } from "express";
 import jwt from "jsonwebtoken";
 import { randomBytes } from "node:crypto";
 import crypto from "node:crypto";
+import { AppError } from "../error/AppError";
+import { STATUS_CODES } from "../statusCodes/respCodes";
+import { responseMessage } from "../statusCodes/responseMessages";
 
 type UserRole =
   | "SUPER_ADMIN"
@@ -83,4 +87,43 @@ export function generateRefrehToken() {
 
 export function hashRefreshToken(token: string) {
   return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+export function verifyGatewaySecret(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  const expected = process.env.API_GATEWAY_SECRET;
+
+  if (!expected) {
+    return next(
+      new AppError(STATUS_CODES.CONFIG_ERROR, "GATEWAY_SECRET not configured"),
+    );
+  }
+  const incomingReq = req.header("x-gateway-secret");
+
+  if (!incomingReq || incomingReq !== expected) {
+    return next(
+      new AppError(
+        STATUS_CODES.FORBIDDEN,
+        responseMessage.GENERAL.GATEWAY_SECRET_INCORRECT,
+      ),
+    );
+  }
+  next();
+}
+
+export function getIdentityHeaders(req: Request) {
+  const userId = req.headers["x-user-id"];
+  const userRole = req.headers["x-user-role"];
+
+  if (!userId || !userRole) {
+    throw new AppError(
+      STATUS_CODES.BAD_REQUEST,
+      responseMessage.AUTH.INVALID_HEADERS,
+    );
+  }
+
+  return { userId, userRole };
 }

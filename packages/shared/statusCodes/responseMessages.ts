@@ -21,6 +21,7 @@ export const responseMessage = {
     LOGOUT_SUCCESS: "User logged out successfully",
     SESSION_REVOKED: "Session has been revoked",
     PASSWORD_CHANGED: "Password changed successfully",
+    INVALID_HEADERS: "Invalid headers",
   },
 
   USER: {
@@ -46,5 +47,7 @@ export const responseMessage = {
     SOMETHING_WENT_WRONG:
       "Something went wrong, Please contact your administrator",
     EMAIL_SENT: "Email sent successfully",
+    GATEWAY_SECRET_INCORRECT:
+      "Incorrect gateway secret, Please contact administratior",
   },
 };

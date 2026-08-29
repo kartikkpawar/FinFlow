@@ -21,6 +21,8 @@ export {
   verifyToken,
   generateRefrehToken,
   hashRefreshToken,
+  getIdentityHeaders,
+  verifyGatewaySecret,
 } from "./auth";
 
 export type { UserPayload } from "./auth";
