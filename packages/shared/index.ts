@@ -23,6 +23,7 @@ export {
   hashRefreshToken,
   getIdentityHeaders,
   verifyGatewaySecret,
+  hasPermission,
 } from "./auth";
 
 export type { UserPayload } from "./auth";

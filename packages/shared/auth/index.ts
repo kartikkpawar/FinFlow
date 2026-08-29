@@ -5,6 +5,7 @@ import crypto from "node:crypto";
 import { AppError } from "../error/AppError";
 import { STATUS_CODES } from "../statusCodes/respCodes";
 import { responseMessage } from "../statusCodes/responseMessages";
+import { Role, ROLE_PERMISSIONS, RolePermission } from "./type";
 
 type UserRole =
   | "SUPER_ADMIN"
@@ -128,3 +129,21 @@ export function getIdentityHeaders(req: Request) {
 
   return { userId: Number(userId), role: String(role), email: String(email) };
 }
+
+export const hasPermission = (
+  req: Request,
+  requiredPermission: RolePermission,
+): boolean => {
+  const { role } = getIdentityHeaders(req);
+  const permissions = ROLE_PERMISSIONS[role as Role];
+
+  if (!permissions) {
+    return false;
+  }
+
+  if (permissions.includes("*")) {
+    return true;
+  }
+
+  return permissions.includes(requiredPermission);
+};
