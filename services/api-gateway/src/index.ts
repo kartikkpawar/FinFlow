@@ -12,6 +12,8 @@ import {
   successResponse,
 } from "@finflow/shared";
 import { resolve } from "node:path";
+import { secureSession } from "./middlewares/secureSession";
+import { secureAuth } from "./middlewares/authServiceMiddleware";
 
 config({ path: resolve(process.cwd(), ".env") });
 config({ path: resolve(process.cwd(), "../.env") });
@@ -44,6 +46,7 @@ app.get("/health", (req, res) => {
 
 app.use(
   "/auth",
+  secureAuth,
   createProxyMiddleware({
     target: AUTH_SERVICE_URL,
     changeOrigin: true,
