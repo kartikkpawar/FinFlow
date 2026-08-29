@@ -5,6 +5,7 @@ import {
   httpLogger,
   logger,
   successResponse,
+  verifyGatewaySecret,
 } from "@finflow/shared";
 
 import express from "express";
@@ -26,7 +27,7 @@ app.get("/health", (req, res) => {
   successResponse(res, { service: "auth-service" });
 });
 
-app.use("/auth", authRoutes);
+app.use("/auth", verifyGatewaySecret, authRoutes);
 
 app.use((_req, _res, next) => {
   next(new AppError(400, "Route Not Found"));
