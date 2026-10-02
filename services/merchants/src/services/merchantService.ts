@@ -59,6 +59,11 @@ async function emitMerchantWebhook(merchantId: number, event: string, payload: R
 export async function createMerchant(input: CreateMerchantInput, identity: Identity) {
   try {
     const [merchant] = await db.insert(merchantsTable).values(input).returning();
+    await db.insert(merchantUsersTable).values({
+      merchantId: merchant.id,
+      userId: identity.userId,
+      role: "MERCHANT_ADMIN",
+    });
     await recordMerchantAudit(merchant.id, identity, "merchant.created", "merchant", merchant.id, { businessName: merchant.businessName });
     await emitMerchantWebhook(merchant.id, "merchant.updated", { action: "created", merchant });
     return merchant;
@@ -120,6 +125,24 @@ export async function updateMerchantStatus(merchantId: number, identity: Identit
 
 export function getIdentity(req: Parameters<typeof getIdentityHeaders>[0]): Identity {
   return getIdentityHeaders(req);
+}
+
+export async function authorizeMerchantCreation(identity: Identity) {
+  if (["SUPER_ADMIN", "ADMIN"].includes(identity.role)) return;
+
+  if (identity.role !== "MERCHANT_USER") {
+    throw new AppError(STATUS_CODES.FORBIDDEN, "Insufficient permissions");
+  }
+
+  const memberships = await db
+    .select({ id: merchantUsersTable.id })
+    .from(merchantUsersTable)
+    .where(eq(merchantUsersTable.userId, identity.userId))
+    .limit(1);
+
+  if (memberships.length) {
+    throw new AppError(STATUS_CODES.FORBIDDEN, "Merchant creation is only available during onboarding");
+  }
 }
 
 export function authorizeMerchantPermission(identity: Identity, permission: "merchant:read" | "merchant:write" | "merchant:update") {
