@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { STATUS_CODES, successResponse } from "@finflow/shared";
-import { acceptInvitation, getIdentity } from "../services/merchantManagementService";
+import { acceptInvitation } from "../services/merchantManagementService";
+import { getIdentity } from "../services/merchantService";
 import { validateAcceptInvitation } from "../schemas/management";
 
 export async function acceptMerchantInvitationController(req: Request, res: Response) {
