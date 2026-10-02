@@ -2,54 +2,58 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 import { useMerchant } from "@/features/merchants/api";
+import { merchantManagementApi, useMerchantApiKeys, useMerchantAudit, useMerchantInvitations, useMerchantSettings, useMerchantUsers, useMerchantWebhooks, type MerchantRole } from "@/features/merchants/management";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+
+const tabs = ["Overview", "Users", "Settings", "Invitations", "API Keys", "Webhooks", "Audit"] as const;
+type Tab = typeof tabs[number];
 
 export default function MerchantDetailPage() {
   const params = useParams<{ merchantId: string }>();
-  const query = useMerchant(params.merchantId);
-
-  if (query.isLoading) return <div className="p-8 text-sm text-muted">Loading merchant...</div>;
-  if (query.isError || !query.data) return <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">Unable to load this merchant.</div>;
-
-  const merchant = query.data;
-
-  return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <Link href="/merchants" className="text-sm font-medium text-brand hover:underline">← Back to merchants</Link>
-
-      <div className="flex flex-col justify-between gap-4 rounded-xl border border-border bg-white p-6 shadow-sm sm:flex-row sm:items-start">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted">Merchant #{merchant.id}</p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink">{merchant.businessName}</h1>
-          <p className="mt-1 text-sm text-muted">{merchant.name}</p>
-        </div>
-        <span className="rounded-full bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700">{merchant.status}</span>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <InfoCard title="Contact information">
-          <Info label="Email" value={merchant.email} />
-          <Info label="Phone" value={merchant.phone} />
-        </InfoCard>
-        <InfoCard title="Account information">
-          <Info label="Status" value={merchant.status} />
-          <Info label="Created" value={new Date(merchant.createdAt).toLocaleString()} />
-          <Info label="Last modified" value={new Date(merchant.modifiedAt).toLocaleString()} />
-        </InfoCard>
-      </div>
-
-      <div className="rounded-xl border border-border bg-white p-6 shadow-sm">
-        <h2 className="text-base font-semibold text-ink">Merchant operations</h2>
-        <p className="mt-2 text-sm leading-6 text-muted">Merchant memberships, configuration, credentials and lifecycle actions will live here as those backend capabilities are added.</p>
-      </div>
+  const id = Number(params.merchantId);
+  const merchantQuery = useMerchant(params.merchantId);
+  const [tab, setTab] = useState<Tab>("Overview");
+  if (merchantQuery.isLoading) return <div className="p-8 text-sm text-muted">Loading merchant...</div>;
+  if (merchantQuery.isError || !merchantQuery.data) return <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">Unable to load this merchant.</div>;
+  const merchant = merchantQuery.data;
+  return <div className="mx-auto max-w-7xl space-y-6">
+    <Link href="/merchants" className="text-sm font-medium text-brand hover:underline">← Back to merchants</Link>
+    <div className="rounded-xl border border-border bg-white p-6 shadow-sm">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start"><div><p className="text-xs font-medium uppercase tracking-wide text-muted">Merchant #{merchant.id}</p><h1 className="mt-1 text-2xl font-bold tracking-tight text-ink">{merchant.businessName}</h1><p className="mt-1 text-sm text-muted">{merchant.name} · {merchant.email}</p></div><span className="rounded-full bg-gray-100 px-3 py-1.5 text-xs font-semibold">{merchant.status}</span></div>
+      <div className="mt-6 flex gap-1 overflow-x-auto border-b border-border">{tabs.map((item) => <button key={item} onClick={() => setTab(item)} className={`whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium ${tab === item ? "border-brand text-brand" : "border-transparent text-muted hover:text-ink"}`}>{item}</button>)}</div>
     </div>
-  );
+    {tab === "Overview" && <Overview merchant={merchant} />}
+    {tab === "Users" && <Users merchantId={id} />}
+    {tab === "Settings" && <Settings merchantId={id} />}
+    {tab === "Invitations" && <Invitations merchantId={id} />}
+    {tab === "API Keys" && <ApiKeys merchantId={id} />}
+    {tab === "Webhooks" && <Webhooks merchantId={id} />}
+    {tab === "Audit" && <Audit merchantId={id} />}
+  </div>;
 }
 
-function InfoCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return <section className="rounded-xl border border-border bg-white p-6 shadow-sm"><h2 className="text-base font-semibold text-ink">{title}</h2><div className="mt-5 space-y-4">{children}</div></section>;
+function Overview({ merchant }: { merchant: { email: string; phone: string; status: string; createdAt: string; modifiedAt: string } }) {
+  return <div className="grid gap-4 md:grid-cols-2"><Card title="Contact"><Info label="Email" value={merchant.email} /><Info label="Phone" value={merchant.phone} /></Card><Card title="Account"><Info label="Status" value={merchant.status} /><Info label="Created" value={new Date(merchant.createdAt).toLocaleString()} /><Info label="Modified" value={new Date(merchant.modifiedAt).toLocaleString()} /></Card></div>;
 }
 
-function Info({ label, value }: { label: string; value: string }) {
-  return <div><p className="text-xs font-medium uppercase tracking-wide text-muted">{label}</p><p className="mt-1 text-sm font-medium text-ink">{value}</p></div>;
+function Users({ merchantId }: { merchantId: number }) {
+  const query = useMerchantUsers(merchantId); const [userId, setUserId] = useState(""); const [role, setRole] = useState<MerchantRole>("MERCHANT_USER"); const add = useMutation({ mutationFn: () => merchantManagementApi.addUser(merchantId, { userId: Number(userId), role }), onSuccess: () => query.refetch() }); const update = useMutation({ mutationFn: ({ userId, role }: { userId: number; role: MerchantRole }) => merchantManagementApi.updateUser(merchantId, userId, { role }), onSuccess: () => query.refetch() }); const remove = useMutation({ mutationFn: (uid: number) => merchantManagementApi.removeUser(merchantId, uid), onSuccess: () => query.refetch() });
+  return <Card title="Merchant users"><form onSubmit={(e) => { e.preventDefault(); if (Number(userId) > 0) add.mutate(); }} className="mb-5 flex flex-wrap gap-2"><input className="rounded-lg border border-border px-3 py-2 text-sm" placeholder="Auth user ID" value={userId} onChange={(e) => setUserId(e.target.value)} /><select className="rounded-lg border border-border px-3 py-2 text-sm" value={role} onChange={(e) => setRole(e.target.value as MerchantRole)}><option>MERCHANT_USER</option><option>MERCHANT_ADMIN</option></select><button className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white">Add user</button></form><Table headers={["User ID", "Role", "Created", ""]}>{query.data?.map((user) => <tr key={user.id} className="border-t border-border"><td className="px-4 py-3">{user.userId}</td><td className="px-4 py-3"><select value={user.role} onChange={(e) => update.mutate({ userId: user.userId, role: e.target.value as MerchantRole })} className="rounded border border-border px-2 py-1 text-sm"><option>MERCHANT_USER</option><option>MERCHANT_ADMIN</option></select></td><td className="px-4 py-3 text-muted">{new Date(user.createdAt).toLocaleDateString()}</td><td className="px-4 py-3 text-right"><button onClick={() => remove.mutate(user.userId)} className="text-sm text-red-600">Remove</button></td></tr>)}</Table></Card>;
 }
+
+function Settings({ merchantId }: { merchantId: number }) { const query = useMerchantSettings(merchantId); const client = useQueryClient(); const mutation = useMutation({ mutationFn: (data: Record<string, unknown>) => merchantManagementApi.updateSettings(merchantId, data), onSuccess: () => client.invalidateQueries({ queryKey: ["merchant-settings", merchantId] }) }); if (query.isLoading) return <Card title="Settings">Loading...</Card>; const s = query.data; if (!s) return null; return <Card title="Merchant settings"><div className="grid gap-4 md:grid-cols-3"><Field label="Timezone" value={s.timezone} onChange={(v) => mutation.mutate({ timezone: v })} /><Field label="Currency" value={s.currency} onChange={(v) => mutation.mutate({ currency: v })} /><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={s.notificationsEnabled} onChange={(e) => mutation.mutate({ notificationsEnabled: e.target.checked })} /> Notifications enabled</label></div></Card>; }
+
+function Invitations({ merchantId }: { merchantId: number }) { const query = useMerchantInvitations(merchantId); const [email, setEmail] = useState(""); const [role, setRole] = useState<MerchantRole>("MERCHANT_USER"); const mutation = useMutation({ mutationFn: () => merchantManagementApi.invite(merchantId, { email, role }), onSuccess: (result) => { setEmail(""); void navigator.clipboard?.writeText(result.token); query.refetch(); } }); const revoke = useMutation({ mutationFn: (invitationId: number) => merchantManagementApi.revokeInvitation(merchantId, invitationId), onSuccess: () => query.refetch() }); return <Card title="Invitations"><form onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }} className="mb-5 flex flex-wrap gap-2"><input required type="email" className="rounded-lg border border-border px-3 py-2 text-sm" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} /><select className="rounded-lg border border-border px-3 py-2 text-sm" value={role} onChange={(e) => setRole(e.target.value as MerchantRole)}><option>MERCHANT_USER</option><option>MERCHANT_ADMIN</option></select><button className="rounded-lg bg-brand px-4 py-2 text-sm text-white">Invite</button></form><Table headers={["Email", "Role", "Status", "Expires", ""]}>{query.data?.map((item) => <tr key={item.id} className="border-t border-border"><td className="px-4 py-3">{item.email}</td><td className="px-4 py-3">{item.role}</td><td className="px-4 py-3">{item.status}</td><td className="px-4 py-3 text-muted">{new Date(item.expiresAt).toLocaleDateString()}</td><td className="px-4 py-3 text-right">{item.status === "PENDING" && <button onClick={() => revoke.mutate(item.id)} className="text-sm text-red-600">Revoke</button>}</td></tr>)}</Table></Card>; }
+
+function ApiKeys({ merchantId }: { merchantId: number }) { const query = useMerchantApiKeys(merchantId); const [name, setName] = useState(""); const [secret, setSecret] = useState<string | null>(null); const create = useMutation({ mutationFn: () => merchantManagementApi.createApiKey(merchantId, { name }), onSuccess: (result) => { setSecret(result.secret); setName(""); query.refetch(); } }); const revoke = useMutation({ mutationFn: (keyId: number) => merchantManagementApi.revokeApiKey(merchantId, keyId), onSuccess: () => query.refetch() }); return <Card title="API keys"><form onSubmit={(e) => { e.preventDefault(); create.mutate(); }} className="mb-4 flex gap-2"><input required className="rounded-lg border border-border px-3 py-2 text-sm" placeholder="Key name" value={name} onChange={(e) => setName(e.target.value)} /><button className="rounded-lg bg-brand px-4 py-2 text-sm text-white">Create key</button></form>{secret && <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm">Copy this secret now: <code className="break-all">{secret}</code></div>}<Table headers={["Name", "Prefix", "Created", ""]}>{query.data?.map((key) => <tr key={key.id} className="border-t border-border"><td className="px-4 py-3">{key.name}</td><td className="px-4 py-3 font-mono text-xs">{key.prefix}…</td><td className="px-4 py-3 text-muted">{new Date(key.createdAt).toLocaleDateString()}</td><td className="px-4 py-3 text-right">{!key.revokedAt && <button onClick={() => revoke.mutate(key.id)} className="text-sm text-red-600">Revoke</button>}</td></tr>)}</Table></Card>; }
+
+function Webhooks({ merchantId }: { merchantId: number }) { const query = useMerchantWebhooks(merchantId); const [url, setUrl] = useState(""); const [secret, setSecret] = useState<string | null>(null); const create = useMutation({ mutationFn: () => merchantManagementApi.createWebhook(merchantId, { url, events: ["payment.created", "payment.failed"] }), onSuccess: (result) => { setSecret(result.secret); setUrl(""); query.refetch(); } }); const remove = useMutation({ mutationFn: (id: number) => merchantManagementApi.deleteWebhook(merchantId, id), onSuccess: () => query.refetch() }); const toggle = useMutation({ mutationFn: ({ id, enabled }: { id: number; enabled: boolean }) => merchantManagementApi.updateWebhook(merchantId, id, { enabled }), onSuccess: () => query.refetch() }); return <Card title="Webhooks"><form onSubmit={(e) => { e.preventDefault(); create.mutate(); }} className="mb-4 flex gap-2"><input required type="url" className="min-w-0 flex-1 rounded-lg border border-border px-3 py-2 text-sm" placeholder="https://example.com/webhook" value={url} onChange={(e) => setUrl(e.target.value)} /><button className="rounded-lg bg-brand px-4 py-2 text-sm text-white">Add webhook</button></form>{secret && <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm">Webhook secret (shown once): <code className="break-all">{secret}</code></div>}<Table headers={["URL", "Events", "Enabled", ""]}>{query.data?.map((hook) => <tr key={hook.id} className="border-t border-border"><td className="max-w-sm truncate px-4 py-3">{hook.url}</td><td className="px-4 py-3 text-xs">{hook.events.join(", ")}</td><td className="px-4 py-3"><input type="checkbox" checked={hook.enabled} onChange={(e) => toggle.mutate({ id: hook.id, enabled: e.target.checked })} /></td><td className="px-4 py-3 text-right"><button onClick={() => remove.mutate(hook.id)} className="text-sm text-red-600">Delete</button></td></tr>)}</Table></Card>; }
+
+function Audit({ merchantId }: { merchantId: number }) { const query = useMerchantAudit(merchantId); return <Card title="Audit log"><Table headers={["Action", "Resource", "Actor", "Time"]}>{query.data?.items.map((log) => <tr key={log.id} className="border-t border-border"><td className="px-4 py-3">{log.action}</td><td className="px-4 py-3">{log.resourceType} {log.resourceId ? `#${log.resourceId}` : ""}</td><td className="px-4 py-3">{log.actorUserId}</td><td className="px-4 py-3 text-muted">{new Date(log.createdAt).toLocaleString()}</td></tr>)}</Table></Card>; }
+
+function Card({ title, children }: { title: string; children: React.ReactNode }) { return <section className="rounded-xl border border-border bg-white p-6 shadow-sm"><h2 className="text-base font-semibold text-ink">{title}</h2><div className="mt-5">{children}</div></section>; }
+function Table({ headers, children }: { headers: string[]; children: React.ReactNode }) { return <div className="overflow-x-auto"><table className="w-full min-w-[700px] text-left text-sm"><thead className="bg-gray-50 text-xs uppercase tracking-wide text-muted"><tr>{headers.map((h) => <th key={h} className="px-4 py-3 font-medium">{h}</th>)}</tr></thead><tbody>{children}</tbody></table></div>; }
+function Info({ label, value }: { label: string; value: string }) { return <div className="mb-3"><p className="text-xs uppercase tracking-wide text-muted">{label}</p><p className="mt-1 text-sm font-medium text-ink">{value}</p></div>; }
+function Field({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) { return <label className="text-sm"><span className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted">{label}</span><input className="w-full rounded-lg border border-border px-3 py-2" value={value} onChange={(e) => onChange(e.target.value)} /></label>; }
