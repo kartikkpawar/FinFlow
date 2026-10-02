@@ -24,11 +24,27 @@ const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || "http://localhost:3002"
 const MERCHANTS_SERVICE_URL =
   process.env.MERCHANTS_SERVICE_URL || "http://localhost:3003";
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
-const ALLOWED_ORIGINS = new Set([
-  FRONTEND_URL,
-  "http://localhost:3000",
-  "http://127.0.0.1:3000",
-]);
+
+function normalizeOrigin(origin: string) {
+  return origin.replace(/\/$/, "");
+}
+
+const CONFIGURED_FRONTEND_ORIGIN = normalizeOrigin(FRONTEND_URL);
+
+function isAllowedOrigin(origin?: string) {
+  if (!origin) return true;
+
+  const normalizedOrigin = normalizeOrigin(origin);
+  if (normalizedOrigin === CONFIGURED_FRONTEND_ORIGIN) return true;
+
+  try {
+    const url = new URL(normalizedOrigin);
+    const isLocalHost = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+    return isLocalHost && (url.protocol === "http:" || url.protocol === "https:");
+  } catch {
+    return false;
+  }
+}
 
 const app = express();
 
@@ -36,13 +52,15 @@ app.use(helmet());
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || ALLOWED_ORIGINS.has(origin)) {
+      if (isAllowedOrigin(origin)) {
         callback(null, true);
         return;
       }
       callback(new AppError(403, "Origin not allowed"));
     },
     credentials: true,
+    methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 app.use(
