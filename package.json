@@ -8,8 +8,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
     "db:push": "npm run db:push --workspace=auth && npm run db:push --workspace=merchants",
-    "db:studio:auth": "drizzle-kit studio --config=services/auth/drizzle.config.ts --port=4983",
-    "db:studio:merchants": "drizzle-kit studio --config=services/merchants/drizzle.config.ts --port=4984",
+    "db:studio:auth": "npm run db:studio --workspace=auth",
+    "db:studio:merchants": "npm run db:studio --workspace=merchants",
     "db:studio": "npm run db:studio:auth & npm run db:studio:merchants & wait"
   },
   "devDependencies": {
