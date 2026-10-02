@@ -39,7 +39,7 @@ export async function createInvitation(merchantId: number, identity: Identity, e
     await audit(merchantId, identity, "merchant_invitation.email_sent", "merchant_invitation", invitation.id, { email });
   } catch (error) {
     await audit(merchantId, identity, "merchant_invitation.email_failed", "merchant_invitation", invitation.id, { email, error: error instanceof Error ? error.message.slice(0, 500) : "Unknown email delivery error" });
-    throw new AppError(STATUS_CODES.SERVICE_UNAVAILABLE, "Invitation created but email delivery is unavailable");
+    throw new AppError(STATUS_CODES.INTERNAL_SERVER_ERROR, "Invitation created but email delivery is unavailable");
   }
   return { ...invitation, token: token.raw };
 }
