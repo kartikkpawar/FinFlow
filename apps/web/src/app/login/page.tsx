@@ -34,7 +34,7 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await login(email, password);
-      router.replace("/dashboard");
+      router.replace("/onboarding");
     } finally {
       setSubmitting(false);
     }
