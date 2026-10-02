@@ -93,14 +93,16 @@ app.use(
     pathRewrite: (_path, req) => req.originalUrl,
     on: {
       error: (_error, _req, res) => {
-        if (res.headersSent) return;
-        res.writeHead(502, { "Content-Type": "application/json" });
-        res.end(
-          JSON.stringify({
-            success: false,
-            message: "Auth service is unavailable",
-          }),
-        );
+        if ("headersSent" in res && "writeHead" in res && "end" in res) {
+          if (res.headersSent) return;
+          res.writeHead(502, { "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({
+              success: false,
+              message: "Auth service is unavailable",
+            }),
+          );
+        }
       },
     },
   }),
@@ -115,14 +117,16 @@ app.use(
     pathRewrite: (_path, req) => req.originalUrl,
     on: {
       error: (_error, _req, res) => {
-        if (res.headersSent) return;
-        res.writeHead(502, { "Content-Type": "application/json" });
-        res.end(
-          JSON.stringify({
-            success: false,
-            message: "Merchant service is unavailable",
-          }),
-        );
+        if ("headersSent" in res && "writeHead" in res && "end" in res) {
+          if (res.headersSent) return;
+          res.writeHead(502, { "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({
+              success: false,
+              message: "Merchant service is unavailable",
+            }),
+          );
+        }
       },
     },
   }),
