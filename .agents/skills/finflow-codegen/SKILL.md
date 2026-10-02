@@ -159,6 +159,11 @@ is:
 ```text
 src/
   controllers/
+    createThingController.ts
+    listThingsController.ts
+    getThingController.ts
+    updateThingController.ts
+    deleteThingController.ts
   services/
   repositories/
   routes/
@@ -174,6 +179,40 @@ src/
 
 Keep controllers thin, services responsible for business rules/orchestration,
 and repositories responsible for persistence when that layer exists.
+
+### Controller organization
+
+**Use one controller file per route/endpoint.** Do not place multiple endpoint
+handlers in a single controller file.
+
+For example, for:
+
+```text
+POST   /merchants
+GET    /merchants
+GET    /merchants/:merchantId
+PATCH  /merchants/:merchantId
+PATCH  /merchants/:merchantId/status
+```
+
+use:
+
+```text
+controllers/
+  createMerchantController.ts
+  listMerchantsController.ts
+  getMerchantController.ts
+  updateMerchantController.ts
+  updateMerchantStatusController.ts
+```
+
+Each controller should remain thin: extract/validate request data, enforce the
+appropriate authorization, call the service-layer operation, and return the
+standard response. Shared controller helpers should only be introduced when
+there is a genuine cross-route concern.
+
+Routes should import each controller directly rather than importing a combined
+controller module containing handlers for multiple endpoints.
 
 ## TypeScript and API rules
 
