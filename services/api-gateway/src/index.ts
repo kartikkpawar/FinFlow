@@ -39,8 +39,15 @@ function isAllowedOrigin(origin?: string) {
 
   try {
     const url = new URL(normalizedOrigin);
-    const isLocalHost = url.hostname === "localhost" || url.hostname === "127.0.0.1";
-    return isLocalHost && (url.protocol === "http:" || url.protocol === "https:");
+    const isLocalHost =
+      url.hostname === "localhost" ||
+      url.hostname === "127.0.0.1" ||
+      url.hostname === "[::1]" ||
+      url.hostname === "::1";
+
+    return (
+      isLocalHost && (url.protocol === "http:" || url.protocol === "https:")
+    );
   } catch {
     return false;
   }
@@ -88,7 +95,12 @@ app.use(
       error: (_error, _req, res) => {
         if (res.headersSent) return;
         res.writeHead(502, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ success: false, message: "Auth service is unavailable" }));
+        res.end(
+          JSON.stringify({
+            success: false,
+            message: "Auth service is unavailable",
+          }),
+        );
       },
     },
   }),
@@ -105,7 +117,12 @@ app.use(
       error: (_error, _req, res) => {
         if (res.headersSent) return;
         res.writeHead(502, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ success: false, message: "Merchant service is unavailable" }));
+        res.end(
+          JSON.stringify({
+            success: false,
+            message: "Merchant service is unavailable",
+          }),
+        );
       },
     },
   }),
