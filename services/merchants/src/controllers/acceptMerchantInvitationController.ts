@@ -8,5 +8,5 @@ export async function acceptMerchantInvitationController(req: Request, res: Resp
   const identity = getIdentity(req);
   const input = validateAcceptInvitation(req.body);
   const result = await acceptInvitation(identity, input.token);
-  return successResponse(res, result, STATUS_CODES.OK);
+  return successResponse(res, result, STATUS_CODES.SUCCESS);
 }
