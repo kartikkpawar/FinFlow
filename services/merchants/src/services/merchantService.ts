@@ -4,6 +4,7 @@ import { db } from "../db";
 import { merchantAuditLogsTable, merchantUsersTable, merchantsTable } from "../db/schema";
 import type { CreateMerchantInput, UpdateMerchantInput } from "../schemas/merchant";
 import type { Identity, MerchantStatus } from "../types/merchant";
+import { enqueueWebhookEvent } from "./webhookDeliveryService";
 
 const ALL_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "SUPPORT"]);
 
@@ -47,10 +48,19 @@ export async function recordMerchantAudit(merchantId: number, identity: Identity
   await db.insert(merchantAuditLogsTable).values({ merchantId, actorUserId: identity.userId, action, resourceType, resourceId: resourceId ? String(resourceId) : undefined, metadata: metadata ?? {} });
 }
 
+async function emitMerchantWebhook(merchantId: number, event: string, payload: Record<string, unknown>) {
+  try {
+    await enqueueWebhookEvent(merchantId, event, payload);
+  } catch {
+    // Webhook delivery is asynchronous and must not roll back the merchant mutation.
+  }
+}
+
 export async function createMerchant(input: CreateMerchantInput, identity: Identity) {
   try {
     const [merchant] = await db.insert(merchantsTable).values(input).returning();
     await recordMerchantAudit(merchant.id, identity, "merchant.created", "merchant", merchant.id, { businessName: merchant.businessName });
+    await emitMerchantWebhook(merchant.id, "merchant.updated", { action: "created", merchant });
     return merchant;
   } catch (error) {
     if (error instanceof Error && /unique/i.test(error.message)) throw new AppError(STATUS_CODES.CONFLICT, "Merchant email or phone already exists");
@@ -88,6 +98,7 @@ export async function updateMerchant(merchantId: number, identity: Identity, inp
     const [merchant] = await db.update(merchantsTable).set({ ...input, modifiedAt: new Date() }).where(eq(merchantsTable.id, merchantId)).returning();
     if (!merchant) throw new AppError(STATUS_CODES.NOT_FOUND, "Merchant not found");
     await recordMerchantAudit(merchantId, identity, "merchant.updated", "merchant", merchantId, { fields: Object.keys(input) });
+    await emitMerchantWebhook(merchantId, "merchant.updated", { action: "updated", merchant, fields: Object.keys(input) });
     return merchant;
   } catch (error) {
     if (error instanceof Error && /unique/i.test(error.message)) throw new AppError(STATUS_CODES.CONFLICT, "Merchant email or phone already exists");
@@ -103,6 +114,7 @@ export async function updateMerchantStatus(merchantId: number, identity: Identit
   const [merchant] = await db.update(merchantsTable).set({ status, modifiedAt: new Date() }).where(eq(merchantsTable.id, merchantId)).returning();
   if (!merchant) throw new AppError(STATUS_CODES.NOT_FOUND, "Merchant not found");
   await recordMerchantAudit(merchantId, identity, "merchant.status_changed", "merchant", merchantId, { from: current.status, to: status });
+  await emitMerchantWebhook(merchantId, "merchant.updated", { action: "status_changed", merchant, from: current.status, to: status });
   return merchant;
 }
 

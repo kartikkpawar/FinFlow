@@ -2,10 +2,11 @@ import { and, desc, eq } from "drizzle-orm";
 import { createHash, randomBytes } from "node:crypto";
 import { AppError, STATUS_CODES } from "@finflow/shared";
 import { db } from "../db";
-import { merchantApiKeysTable, merchantAuditLogsTable, merchantInvitationsTable, merchantSettingsTable, merchantUsersTable, merchantWebhooksTable } from "../db/schema";
+import { merchantApiKeysTable, merchantAuditLogsTable, merchantInvitationsTable, merchantSettingsTable, merchantUsersTable, merchantWebhooksTable, merchantsTable } from "../db/schema";
 import type { Identity } from "../types/merchant";
 import type { ManagedMerchantRole } from "../schemas/management";
 import { enqueueWebhookEvent } from "./webhookDeliveryService";
+import { sendMerchantInvitationEmail } from "./emailDeliveryService";
 
 const GLOBAL_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "SUPPORT"]);
 const PERMISSIONS: Record<string, string[]> = { SUPER_ADMIN: ["*"], ADMIN: ["merchant:read", "merchant:update"], SUPPORT: ["merchant:read"], MERCHANT_ADMIN: ["merchant:read", "merchant:update"], MERCHANT_USER: [], ANALYST: [] };
@@ -23,21 +24,41 @@ export async function removeMerchantUser(merchantId: number, userId: number, ide
 export async function getSettings(merchantId: number, identity: Identity) { await assertScope(merchantId, identity); let [settings] = await db.select().from(merchantSettingsTable).where(eq(merchantSettingsTable.merchantId, merchantId)).limit(1); if (!settings) [settings] = await db.insert(merchantSettingsTable).values({ merchantId }).returning(); return settings; }
 export async function updateSettings(merchantId: number, identity: Identity, input: Partial<{ timezone: string; currency: string; notificationsEnabled: boolean; metadata: Record<string, unknown> }>) { await assertScope(merchantId, identity); const current = await getSettings(merchantId, identity); const [settings] = await db.update(merchantSettingsTable).set({ ...input, modifiedAt: new Date() }).where(eq(merchantSettingsTable.id, current.id)).returning(); await audit(merchantId, identity, "merchant_settings.updated", "merchant_settings", settings.id); return settings; }
 
-export async function createInvitation(merchantId: number, identity: Identity, email: string, role: ManagedMerchantRole) { await assertScope(merchantId, identity); const pending = await db.select({ id: merchantInvitationsTable.id }).from(merchantInvitationsTable).where(and(eq(merchantInvitationsTable.merchantId, merchantId), eq(merchantInvitationsTable.email, email), eq(merchantInvitationsTable.status, "PENDING"))); if (pending.length) throw new AppError(STATUS_CODES.CONFLICT, "A pending invitation already exists for this email"); const token = secret("invite"); const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); const [invitation] = await db.insert(merchantInvitationsTable).values({ merchantId, email, role, tokenHash: token.hash, invitedBy: identity.userId, expiresAt }).returning(); await audit(merchantId, identity, "merchant_invitation.created", "merchant_invitation", invitation.id, { email, role }); return { ...invitation, token: token.raw }; }
+export async function createInvitation(merchantId: number, identity: Identity, email: string, role: ManagedMerchantRole) {
+  await assertScope(merchantId, identity);
+  const pending = await db.select({ id: merchantInvitationsTable.id }).from(merchantInvitationsTable).where(and(eq(merchantInvitationsTable.merchantId, merchantId), eq(merchantInvitationsTable.email, email), eq(merchantInvitationsTable.status, "PENDING")));
+  if (pending.length) throw new AppError(STATUS_CODES.CONFLICT, "A pending invitation already exists for this email");
+  const [merchant] = await db.select({ businessName: merchantsTable.businessName }).from(merchantsTable).where(eq(merchantsTable.id, merchantId)).limit(1);
+  if (!merchant) throw new AppError(STATUS_CODES.NOT_FOUND, "Merchant not found");
+  const token = secret("invite");
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
+  const [invitation] = await db.insert(merchantInvitationsTable).values({ merchantId, email, role, tokenHash: token.hash, invitedBy: identity.userId, expiresAt }).returning();
+  await audit(merchantId, identity, "merchant_invitation.created", "merchant_invitation", invitation.id, { email, role });
+  try {
+    await sendMerchantInvitationEmail({ email, merchantName: merchant.businessName, role, token: token.raw });
+    await audit(merchantId, identity, "merchant_invitation.email_sent", "merchant_invitation", invitation.id, { email });
+  } catch (error) {
+    await audit(merchantId, identity, "merchant_invitation.email_failed", "merchant_invitation", invitation.id, { email, error: error instanceof Error ? error.message.slice(0, 500) : "Unknown email delivery error" });
+    throw new AppError(STATUS_CODES.INTERNAL_SERVER_ERROR, "Invitation created but email delivery is unavailable");
+  }
+  return { ...invitation, token: token.raw };
+}
 
 export async function acceptInvitation(identity: Identity, rawToken: string) {
   const tokenHash = createHash("sha256").update(rawToken).digest("hex");
-  const [invitation] = await db.select().from(merchantInvitationsTable).where(eq(merchantInvitationsTable.tokenHash, tokenHash)).limit(1);
-  if (!invitation) throw new AppError(STATUS_CODES.NOT_FOUND, "Invitation not found");
-  if (invitation.status !== "PENDING") throw new AppError(STATUS_CODES.BAD_REQUEST, "Invitation is no longer active");
-  if (invitation.expiresAt <= new Date()) { await db.update(merchantInvitationsTable).set({ status: "EXPIRED" }).where(eq(merchantInvitationsTable.id, invitation.id)); throw new AppError(STATUS_CODES.BAD_REQUEST, "Invitation has expired"); }
-  if (invitation.email.toLowerCase() !== identity.email.toLowerCase()) throw new AppError(STATUS_CODES.FORBIDDEN, "Invitation email does not match the authenticated user");
-  const [existing] = await db.select({ id: merchantUsersTable.id }).from(merchantUsersTable).where(and(eq(merchantUsersTable.merchantId, invitation.merchantId), eq(merchantUsersTable.userId, identity.userId))).limit(1);
-  if (existing) throw new AppError(STATUS_CODES.CONFLICT, "User is already a member of this merchant");
-  const [membership] = await db.insert(merchantUsersTable).values({ merchantId: invitation.merchantId, userId: identity.userId, role: invitation.role }).returning();
-  await db.update(merchantInvitationsTable).set({ status: "ACCEPTED", acceptedAt: new Date() }).where(eq(merchantInvitationsTable.id, invitation.id));
-  await audit(invitation.merchantId, identity, "merchant_invitation.accepted", "merchant_invitation", invitation.id, { role: invitation.role });
-  return { merchantId: invitation.merchantId, membership };
+  return db.transaction(async (tx) => {
+    const [invitation] = await tx.select().from(merchantInvitationsTable).where(eq(merchantInvitationsTable.tokenHash, tokenHash)).limit(1);
+    if (!invitation) throw new AppError(STATUS_CODES.NOT_FOUND, "Invitation not found");
+    if (invitation.status !== "PENDING") throw new AppError(STATUS_CODES.BAD_REQUEST, "Invitation is no longer active");
+    if (invitation.expiresAt <= new Date()) { await tx.update(merchantInvitationsTable).set({ status: "EXPIRED" }).where(eq(merchantInvitationsTable.id, invitation.id)); throw new AppError(STATUS_CODES.BAD_REQUEST, "Invitation has expired"); }
+    if (invitation.email.toLowerCase() !== identity.email.toLowerCase()) throw new AppError(STATUS_CODES.FORBIDDEN, "Invitation email does not match the authenticated user");
+    const [existing] = await tx.select({ id: merchantUsersTable.id }).from(merchantUsersTable).where(and(eq(merchantUsersTable.merchantId, invitation.merchantId), eq(merchantUsersTable.userId, identity.userId))).limit(1);
+    if (existing) throw new AppError(STATUS_CODES.CONFLICT, "User is already a member of this merchant");
+    const [membership] = await tx.insert(merchantUsersTable).values({ merchantId: invitation.merchantId, userId: identity.userId, role: invitation.role }).returning();
+    await tx.update(merchantInvitationsTable).set({ status: "ACCEPTED", acceptedAt: new Date() }).where(eq(merchantInvitationsTable.id, invitation.id));
+    await tx.insert(merchantAuditLogsTable).values({ merchantId: invitation.merchantId, actorUserId: identity.userId, action: "merchant_invitation.accepted", resourceType: "merchant_invitation", resourceId: String(invitation.id), metadata: { role: invitation.role } });
+    return { merchantId: invitation.merchantId, membership };
+  });
 }
 
 export async function listInvitations(merchantId: number, identity: Identity) { await assertScope(merchantId, identity); const invitations = await db.select().from(merchantInvitationsTable).where(eq(merchantInvitationsTable.merchantId, merchantId)).orderBy(desc(merchantInvitationsTable.createdAt)); const now = new Date(); return invitations.map((invitation) => invitation.status === "PENDING" && invitation.expiresAt < now ? { ...invitation, status: "EXPIRED" as const } : invitation); }

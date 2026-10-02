@@ -16,6 +16,7 @@ export const merchantManagementApi = {
   updateSettings: (id: number, data: Record<string, unknown>) => apiFetch<MerchantSettings>(`/merchants/${id}/settings`, { method: "PATCH", data }),
   invitations: (id: number) => apiFetch<Invitation[]>(`/merchants/${id}/invitations`),
   invite: (id: number, data: { email: string; role: MerchantRole }) => apiFetch<Invitation & { token: string }>(`/merchants/${id}/invitations`, { method: "POST", data }),
+  acceptInvitation: (token: string) => apiFetch<{ merchantId: number; membership: MerchantUser }>(`/merchants/invitations/accept`, { method: "POST", data: { token } }),
   revokeInvitation: (id: number, invitationId: number) => apiFetch<Invitation>(`/merchants/${id}/invitations/${invitationId}`, { method: "DELETE" }),
   apiKeys: (id: number) => apiFetch<ApiKey[]>(`/merchants/${id}/api-keys`),
   createApiKey: (id: number, data: { name: string; expiresAt?: string }) => apiFetch<ApiKey & { secret: string }>(`/merchants/${id}/api-keys`, { method: "POST", data }),
