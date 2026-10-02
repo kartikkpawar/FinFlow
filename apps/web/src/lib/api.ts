@@ -16,22 +16,42 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiFetch<T>(
-  path: string,
-  options: RequestInit = {},
-): Promise<T> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("finflow_access_token") : null;
+async function request<T>(path: string, options: RequestInit, token: string | null) {
   const headers = new Headers(options.headers);
-
   headers.set("Content-Type", "application/json");
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers,
+    credentials: "include",
   });
 
   const payload = (await response.json().catch(() => ({}))) as ApiResponse<T> & { error?: string };
+  return { response, payload };
+}
+
+export async function apiFetch<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const token = typeof window !== "undefined" ? localStorage.getItem("finflow_access_token") : null;
+  const { response, payload } = await request<T>(path, options, token);
+
+  if (response.status === 401 && typeof window !== "undefined" && path !== "/auth/refresh-access-token") {
+    const refresh = await request<{ accessToken: string }>("/auth/refresh-access-token", { method: "POST" }, null);
+    const nextToken = refresh.payload.data?.accessToken;
+
+    if (refresh.response.ok && nextToken) {
+      localStorage.setItem("finflow_access_token", nextToken);
+      const retry = await request<T>(path, options, nextToken);
+      if (retry.response.ok) return retry.payload.data;
+      throw new ApiError(retry.response.status, retry.payload.message ?? "Request failed");
+    }
+
+    localStorage.removeItem("finflow_access_token");
+    localStorage.removeItem("finflow_user");
+  }
 
   if (!response.ok) {
     throw new ApiError(response.status, payload.message ?? payload.error ?? "Request failed");
