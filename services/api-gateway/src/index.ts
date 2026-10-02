@@ -23,11 +23,17 @@ const PORT = process.env.API_GATEWAY_PORT || 3001;
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || "http://localhost:3002";
 const MERCHANTS_SERVICE_URL =
   process.env.MERCHANTS_SERVICE_URL || "http://localhost:3003";
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
 const app = express();
 
 app.use(helmet());
-app.use(cors());
+app.use(
+  cors({
+    origin: FRONTEND_URL,
+    credentials: true,
+  }),
+);
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
