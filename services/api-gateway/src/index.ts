@@ -20,15 +20,14 @@ config({ path: resolve(process.cwd(), "../.env") });
 
 const PORT = process.env.API_GATEWAY_PORT || 3001;
 
-// Services config urls
-const AUTH_SERVICE_URL =
-  process.env.AUTH_SERVICE_URL || "http://localhost:3002";
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || "http://localhost:3002";
+const MERCHANTS_SERVICE_URL =
+  process.env.MERCHANTS_SERVICE_URL || "http://localhost:3003";
 
 const app = express();
 
 app.use(helmet());
 app.use(cors());
-
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -37,11 +36,10 @@ app.use(
     legacyHeaders: false,
   }),
 );
-
 app.use(httpLogger);
 
-app.get("/health", (req, res) => {
-  successResponse(res, { service: "auth-service" });
+app.get("/health", (_req, res) => {
+  return successResponse(res, { service: "api-gateway" });
 });
 
 app.use(
@@ -51,6 +49,16 @@ app.use(
     target: AUTH_SERVICE_URL,
     changeOrigin: true,
     pathRewrite: (path) => `/auth${path}`,
+  }),
+);
+
+app.use(
+  "/merchants",
+  secureSession,
+  createProxyMiddleware({
+    target: MERCHANTS_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/merchants${path}`,
   }),
 );
 

@@ -6,8 +6,8 @@
     "outDir": "dist",
     "sourceMap": true,
     "types": ["node"],
-    "module": "CommonJS",
-    "moduleResolution": "Node"
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext"
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]

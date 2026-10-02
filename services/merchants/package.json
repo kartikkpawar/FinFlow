@@ -2,17 +2,32 @@
   "name": "merchants-service",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "start": "tsx src/index.ts"
+    "start": "tsx src/index.ts",
+    "check-types": "tsc --noEmit",
+    "build": "tsc",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Merchant service for merchant lifecycle and tenant management",
+  "dependencies": {
+    "@finflow/shared": "^1.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^1.0.0-rc.4",
+    "express": "^5.2.1",
+    "pg": "^8.23.0"
+  },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^26.4.0",
+    "@types/pg": "^8.23.1",
+    "drizzle-kit": "^1.0.0-rc.4",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2"
   }
