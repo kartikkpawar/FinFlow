@@ -7,10 +7,7 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
-    "db:push": "npm run db:push --workspace=auth && npm run db:push --workspace=merchants",
-    "db:studio:auth": "npm run db:studio --workspace=auth",
-    "db:studio:merchants": "npm run db:studio --workspace=merchants",
-    "db:studio": "npm run db:studio:auth & npm run db:studio:merchants & wait"
+    "db:push": "npm run db:push --workspace=auth-service && npm run db:push --workspace=merchants-service"
   },
   "devDependencies": {
     "prettier": "^3.7.4",
