@@ -1,41 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 
 export type MerchantStatus = "PENDING" | "ACTIVE" | "SUSPENDED" | "INACTIVE" | "REJECTED";
-
-export type Merchant = {
-  id: number;
-  name: string;
-  businessName: string;
-  email: string;
-  phone: string;
-  status: MerchantStatus;
-  createdAt: string;
-  modifiedAt: string;
-};
-
-type MerchantList = {
-  items: Merchant[];
-  pagination: { page: number; limit: number; total: number; totalPages: number };
-};
-
-export function useMerchants(params: { page?: number; limit?: number; search?: string; status?: MerchantStatus }) {
-  const search = new URLSearchParams();
-  if (params.page) search.set("page", String(params.page));
-  if (params.limit) search.set("limit", String(params.limit));
-  if (params.search) search.set("search", params.search);
-  if (params.status) search.set("status", params.status);
-
-  return useQuery({
-    queryKey: ["merchants", params],
-    queryFn: () => apiFetch<MerchantList>(`/merchants?${search.toString()}`),
-  });
-}
-
-export function useMerchant(merchantId: string) {
-  return useQuery({
-    queryKey: ["merchant", merchantId],
-    queryFn: () => apiFetch<Merchant>(`/merchants/${merchantId}`),
-    enabled: Boolean(merchantId),
-  });
-}
+export type Merchant = { id: number; name: string; businessName: string; email: string; phone: string; status: MerchantStatus; createdAt: string; modifiedAt: string };
+type MerchantList = { items: Merchant[]; page: number; limit: number; total: number; totalPages: number };
+export function useMerchants(params: { page?: number; limit?: number; search?: string; status?: MerchantStatus }) { const search = new URLSearchParams(); if (params.page) search.set("page", String(params.page)); if (params.limit) search.set("limit", String(params.limit)); if (params.search) search.set("search", params.search); if (params.status) search.set("status", params.status); return useQuery({ queryKey: ["merchants", params], queryFn: () => apiFetch<MerchantList>(`/merchants?${search.toString()}`) }); }
+export function useMerchant(merchantId: string) { return useQuery({ queryKey: ["merchant", merchantId], queryFn: () => apiFetch<Merchant>(`/merchants/${merchantId}`), enabled: Boolean(merchantId) }); }
+export function useCreateMerchant() { const client = useQueryClient(); return useMutation({ mutationFn: (data: Pick<Merchant, "name" | "businessName" | "email" | "phone">) => apiFetch<Merchant>("/merchants", { method: "POST", data }), onSuccess: () => client.invalidateQueries({ queryKey: ["merchants"] }) }); }
+export function useUpdateMerchant(merchantId: number) { const client = useQueryClient(); return useMutation({ mutationFn: (data: Partial<Pick<Merchant, "name" | "businessName" | "email" | "phone">>) => apiFetch<Merchant>(`/merchants/${merchantId}`, { method: "PATCH", data }), onSuccess: () => { client.invalidateQueries({ queryKey: ["merchants"] }); client.invalidateQueries({ queryKey: ["merchant", String(merchantId)] }); } }); }
+export function useUpdateMerchantStatus(merchantId: number) { const client = useQueryClient(); return useMutation({ mutationFn: (status: MerchantStatus) => apiFetch<Merchant>(`/merchants/${merchantId}/status`, { method: "PATCH", data: { status } }), onSuccess: () => { client.invalidateQueries({ queryKey: ["merchants"] }); client.invalidateQueries({ queryKey: ["merchant", String(merchantId)] }); } }); }
