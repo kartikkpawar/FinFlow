@@ -4,23 +4,37 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/auth-context";
 
+function EyeIcon({ visible }: { visible: boolean }) {
+  if (visible) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true" className="h-5 w-5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12s3.5-6 9.75-6 9.75 6 9.75 6-3.5 6-9.75 6S2.25 12 2.25 12Z" />
+        <circle cx="12" cy="12" r="2.75" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true" className="h-5 w-5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="m3 3 18 18M10.58 10.58a2 2 0 0 0 2.83 2.83M9.88 5.1A10.5 10.5 0 0 1 12 4.88c6.25 0 9.75 7.12 9.75 7.12a17.6 17.6 0 0 1-3.18 3.94M6.61 6.62C3.75 8.32 2.25 12 2.25 12s3.5 7.12 9.75 7.12a10.5 10.5 0 0 0 4.12-.82" />
+    </svg>
+  );
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError(null);
     setSubmitting(true);
     try {
       await login(email, password);
       router.replace("/dashboard");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to sign in");
     } finally {
       setSubmitting(false);
     }
@@ -51,10 +65,26 @@ export default function LoginPage() {
               </label>
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-gray-700">Password</span>
-                <input value={password} onChange={(event) => setPassword(event.target.value)} type="password" required autoComplete="current-password" className="w-full rounded-lg border border-border px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-blue-100" />
+                <div className="relative">
+                  <input
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    type={showPassword ? "text" : "password"}
+                    required
+                    autoComplete="current-password"
+                    className="w-full rounded-lg border border-border px-3 py-2.5 pr-11 outline-none focus:border-brand focus:ring-2 focus:ring-blue-100"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((visible) => !visible)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    title={showPassword ? "Hide password" : "Show password"}
+                    className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-gray-500 transition hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-100"
+                  >
+                    <EyeIcon visible={showPassword} />
+                  </button>
+                </div>
               </label>
-
-              {error && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
 
               <button disabled={submitting} className="w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
                 {submitting ? "Signing in..." : "Sign in"}

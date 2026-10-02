@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/features/auth/auth-context";
 import { QueryProvider } from "@/lib/query-provider";
+import { ToastProvider } from "@/components/toast";
 
 export const metadata: Metadata = {
   title: "FinFlow",
@@ -15,6 +16,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <QueryProvider>
           <AuthProvider>{children}</AuthProvider>
         </QueryProvider>
+        <ToastProvider />
       </body>
     </html>
   );

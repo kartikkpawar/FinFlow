@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async login(email, password) {
         const payload = await apiFetch<unknown>("/auth/login", {
           method: "POST",
-          body: JSON.stringify({ email, password }),
+          data: { email, password },
         });
         const result = extractLoginPayload(payload);
         localStorage.setItem("finflow_access_token", result.accessToken);

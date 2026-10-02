@@ -1,61 +1,87 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+import axios, { AxiosError, type AxiosRequestConfig } from "axios";
+import { showToast } from "@/components/toast";
 
-export type ApiResponse<T> = {
-  success?: boolean;
-  message?: string;
-  data: T;
-};
-
-export class ApiError extends Error {
-  constructor(
-    public readonly status: number,
-    message: string,
-  ) {
-    super(message);
-    this.name = "ApiError";
+function getApiBaseUrl() {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
   }
+
+  if (typeof window !== "undefined") {
+    return `${window.location.protocol}//${window.location.hostname}:3001`;
+  }
+
+  return "http://localhost:3001";
 }
 
-async function request<T>(path: string, options: RequestInit, token: string | null) {
-  const headers = new Headers(options.headers);
-  headers.set("Content-Type", "application/json");
-  if (token) headers.set("Authorization", `Bearer ${token}`);
+const api = axios.create({
+  baseURL: getApiBaseUrl(),
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
-    credentials: "include",
-  });
+api.interceptors.request.use((config) => {
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("finflow_access_token")
+      : null;
 
-  const payload = (await response.json().catch(() => ({}))) as ApiResponse<T> & { error?: string };
-  return { response, payload };
-}
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError<{ message?: string; error?: string }>) => {
+    const originalRequest = error.config as
+      | (AxiosRequestConfig & { _retry?: boolean })
+      | undefined;
+
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      originalRequest.url !== "/auth/refresh-access-token"
+    ) {
+      originalRequest._retry = true;
+
+      try {
+        const response = await api.post<{ data: { accessToken: string } }>(
+          "/auth/refresh-access-token",
+        );
+        const token = response.data.data.accessToken;
+        localStorage.setItem("finflow_access_token", token);
+        originalRequest.headers = originalRequest.headers ?? {};
+        originalRequest.headers.Authorization = `Bearer ${token}`;
+        return api(originalRequest);
+      } catch {
+        localStorage.removeItem("finflow_access_token");
+        localStorage.removeItem("finflow_user");
+      }
+    }
+
+    const message =
+      error.response?.data?.message ??
+      error.response?.data?.error ??
+      "Unable to connect to FinFlow API. Make sure the API Gateway is running on port 3001.";
+
+    showToast(message, "error");
+    return Promise.reject(error);
+  },
+);
 
 export async function apiFetch<T>(
   path: string,
-  options: RequestInit = {},
+  options: AxiosRequestConfig = {},
 ): Promise<T> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("finflow_access_token") : null;
-  const { response, payload } = await request<T>(path, options, token);
+  const response = await api.request<{ data: T }>({
+    url: path,
+    ...options,
+  });
 
-  if (response.status === 401 && typeof window !== "undefined" && path !== "/auth/refresh-access-token") {
-    const refresh = await request<{ accessToken: string }>("/auth/refresh-access-token", { method: "POST" }, null);
-    const nextToken = refresh.payload.data?.accessToken;
-
-    if (refresh.response.ok && nextToken) {
-      localStorage.setItem("finflow_access_token", nextToken);
-      const retry = await request<T>(path, options, nextToken);
-      if (retry.response.ok) return retry.payload.data;
-      throw new ApiError(retry.response.status, retry.payload.message ?? "Request failed");
-    }
-
-    localStorage.removeItem("finflow_access_token");
-    localStorage.removeItem("finflow_user");
-  }
-
-  if (!response.ok) {
-    throw new ApiError(response.status, payload.message ?? payload.error ?? "Request failed");
-  }
-
-  return payload.data;
+  return response.data.data;
 }
