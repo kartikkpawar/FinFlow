@@ -23,7 +23,7 @@ const PORT = process.env.API_GATEWAY_PORT || 3001;
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || "http://localhost:3002";
 const MERCHANTS_SERVICE_URL =
   process.env.MERCHANTS_SERVICE_URL || "http://localhost:3003";
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3004";
 
 function normalizeOrigin(origin: string) {
   return origin.replace(/\/$/, "");
