@@ -24,13 +24,24 @@ const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || "http://localhost:3002"
 const MERCHANTS_SERVICE_URL =
   process.env.MERCHANTS_SERVICE_URL || "http://localhost:3003";
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+const ALLOWED_ORIGINS = new Set([
+  FRONTEND_URL,
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+]);
 
 const app = express();
 
 app.use(helmet());
 app.use(
   cors({
-    origin: FRONTEND_URL,
+    origin: (origin, callback) => {
+      if (!origin || ALLOWED_ORIGINS.has(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new AppError(403, "Origin not allowed"));
+    },
     credentials: true,
   }),
 );
@@ -55,6 +66,13 @@ app.use(
     target: AUTH_SERVICE_URL,
     changeOrigin: true,
     pathRewrite: (path) => `/auth${path}`,
+    on: {
+      error: (_error, _req, res) => {
+        if (res.headersSent) return;
+        res.writeHead(502, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: false, message: "Auth service is unavailable" }));
+      },
+    },
   }),
 );
 
@@ -65,6 +83,13 @@ app.use(
     target: MERCHANTS_SERVICE_URL,
     changeOrigin: true,
     pathRewrite: (path) => `/merchants${path}`,
+    on: {
+      error: (_error, _req, res) => {
+        if (res.headersSent) return;
+        res.writeHead(502, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: false, message: "Merchant service is unavailable" }));
+      },
+    },
   }),
 );
 
