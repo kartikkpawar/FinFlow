@@ -9,18 +9,14 @@ export default function LoginPage() {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError(null);
     setSubmitting(true);
     try {
       await login(email, password);
       router.replace("/dashboard");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to sign in");
     } finally {
       setSubmitting(false);
     }
@@ -53,8 +49,6 @@ export default function LoginPage() {
                 <span className="mb-2 block text-sm font-medium text-gray-700">Password</span>
                 <input value={password} onChange={(event) => setPassword(event.target.value)} type="password" required autoComplete="current-password" className="w-full rounded-lg border border-border px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-blue-100" />
               </label>
-
-              {error && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
 
               <button disabled={submitting} className="w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
                 {submitting ? "Signing in..." : "Sign in"}
