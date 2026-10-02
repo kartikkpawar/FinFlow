@@ -1,4 +1,5 @@
 import {
+  index,
   integer,
   pgEnum,
   pgTable,
@@ -48,10 +49,7 @@ export const merchantUsersTable = pgTable(
       table.merchantId,
       table.userId,
     ),
-    userIndex: uniqueIndex("merchant_users_user_merchant_unique").on(
-      table.userId,
-      table.merchantId,
-    ),
+    userIndex: index("merchant_users_user_id_idx").on(table.userId),
   }),
 );
 
