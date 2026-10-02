@@ -30,7 +30,7 @@ For every implementation request:
 6. Preserve existing contracts unless the request explicitly changes them.
 7. Enforce authentication, authorization, and merchant isolation.
 8. Keep database ownership within service boundaries.
-9. Add migrations for schema changes.
+9. Update the service-owned Drizzle schema and synchronize it with the configured database workflow.
 10. Add meaningful tests.
 11. Run relevant typecheck, lint, tests, and build commands.
 12. Fix failures introduced by the implementation.
@@ -72,9 +72,12 @@ merchant-owned integration settings.
 
 **Payment Service** owns payment/transaction domain state when implemented.
 
-Each service owns its own PostgreSQL database. Never query another service's DB
-or create cross-service database foreign keys. Cross-service data is exchanged
-through APIs/events.
+FinFlow currently uses one shared physical PostgreSQL database. Each service
+still owns its own logical data domain and database module. Service-specific DB
+environment variables may point to the same physical database.
+
+Never query another service's tables directly or create cross-service database
+foreign keys. Cross-service data is exchanged through APIs/events.
 
 ## Roles and authorization
 
@@ -117,7 +120,7 @@ Before coding inspect:
 - schemas and validation
 - middleware and RBAC
 - shared packages
-- migrations/schema
+- database schemas and Drizzle configuration
 - tests
 - related Auth/RBAC behavior
 - environment configuration
@@ -132,8 +135,8 @@ utility. Do not silently refactor unrelated code.
 2. Search and inspect related repository code.
 3. Produce a concise implementation plan internally.
 4. Implement in dependency order, adapting to existing conventions:
-   shared contracts -> schema -> migration -> validation -> data access ->
-   service logic -> controller -> middleware -> routes -> gateway -> events -> tests.
+   shared contracts -> schema -> validation -> data access -> service logic ->
+   controller -> middleware -> routes -> gateway -> events -> tests.
 5. Validate security and tenant isolation.
 6. Run relevant workspace validation, then broader validation where practical.
 7. Review changed files for unrelated edits and secrets.
@@ -242,14 +245,23 @@ secret at creation/rotation time.
 
 ## Database rules
 
-FinFlow uses PostgreSQL + Drizzle with one database per service.
+FinFlow uses PostgreSQL + Drizzle with one shared physical database and
+service-specific logical ownership.
 
-- Use migrations for schema changes.
+- Each service owns its own tables and schema definitions.
+- Service-specific DB environment variables may point to the same PostgreSQL database.
+- `src/db/schema.ts` is the source of truth for service-owned schema.
+- Never query another service's tables directly.
+- Never create cross-service FKs.
+- Do not create or commit generated SQL files under `drizzle/`.
+- Use the configured Drizzle `db:push` workflow to synchronize schema changes.
 - Use constraints for durable invariants.
 - Index actual query patterns.
-- Use transactions for atomic multi-write operations.
 - Scope merchant-owned queries by `merchantId`.
-- Never create cross-service FKs.
+- Use transactions for atomic multi-write operations.
+
+Do not add a committed SQL migration workflow or recreate deleted
+`drizzle/*.sql` files unless the architecture is explicitly changed by the user.
 
 Known merchant statuses:
 
@@ -308,7 +320,8 @@ dependency is merged, unless the user explicitly requests stacked PRs.
 - runtime input is validated
 - authentication/authorization is enforced
 - merchant isolation is enforced where required
-- schema and migration are correct
+- schema is correct and synchronized through the configured Drizzle workflow
+- no generated SQL files were added under `drizzle/`
 - transactions are used where required
 - errors/logging follow project conventions
 - secrets are protected
@@ -329,7 +342,7 @@ Report concisely:
 - modified
 
 ### Database
-- schema/migration changes
+- schema changes and schema synchronization workflow
 
 ### API
 - routes added/changed
