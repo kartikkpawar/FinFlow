@@ -83,7 +83,7 @@ app.use(
   createProxyMiddleware({
     target: AUTH_SERVICE_URL,
     changeOrigin: true,
-    pathRewrite: (path) => `/auth${path}`,
+    pathRewrite: (_path, req) => req.originalUrl,
     on: {
       error: (_error, _req, res) => {
         if (res.headersSent) return;
@@ -100,7 +100,7 @@ app.use(
   createProxyMiddleware({
     target: MERCHANTS_SERVICE_URL,
     changeOrigin: true,
-    pathRewrite: (path) => `/merchants${path}`,
+    pathRewrite: (_path, req) => req.originalUrl,
     on: {
       error: (_error, _req, res) => {
         if (res.headersSent) return;
