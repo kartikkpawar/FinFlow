@@ -153,8 +153,7 @@ passed unless it was executed successfully.
 
 ## Code organization
 
-Follow the existing service organization. If none exists, a reasonable layout
-is:
+Follow the existing service organization. If none exists, a reasonable layout is:
 
 ```text
 src/
@@ -282,6 +281,25 @@ Keep changes focused and reviewable. Never commit secrets, `.env` files,
 unnecessary lockfile changes, unrelated formatting, or unrelated refactors.
 For feature work, use a feature branch rather than modifying `main` directly.
 
+### Pull request workflow
+
+All implementation PRs must target **`main`** unless the user explicitly asks
+for a different base branch.
+
+Before opening a PR:
+
+1. Create the feature branch from the current `main`.
+2. Implement and validate the requested change on that branch.
+3. Re-check the diff against `main` to ensure only the intended changes are
+   included.
+4. Open the PR with `main` as the base branch.
+5. Report the PR number, title, base branch, head branch, and validation status.
+
+Do not create a PR against another feature branch merely because that branch
+contains a dependency. If a dependency is not yet in `main`, either include the
+necessary compatible changes in the current feature branch or wait until the
+dependency is merged, unless the user explicitly requests stacked PRs.
+
 ## Definition of done
 
 - correct service owns the functionality
@@ -324,6 +342,12 @@ Report concisely:
 - lint: passed/failed/not run
 - tests: passed/failed/not run
 - build: passed/failed/not run
+
+### PR
+- PR number and link
+- base branch
+- head branch
+- merge state if known
 
 ### Notes
 - limitations/follow-up work
