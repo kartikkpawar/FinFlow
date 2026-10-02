@@ -14,6 +14,7 @@ import {
 export const merchantStatusEnum = pgEnum("merchant_status", ["PENDING", "ACTIVE", "SUSPENDED", "INACTIVE", "REJECTED"]);
 export const merchantRoleEnum = pgEnum("merchant_role", ["MERCHANT_ADMIN", "MERCHANT_USER"]);
 export const invitationStatusEnum = pgEnum("merchant_invitation_status", ["PENDING", "ACCEPTED", "EXPIRED", "REVOKED"]);
+export const webhookDeliveryStatusEnum = pgEnum("merchant_webhook_delivery_status", ["PENDING", "DELIVERED", "FAILED"]);
 
 export const merchantsTable = pgTable("merchants", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
@@ -87,6 +88,24 @@ export const merchantWebhooksTable = pgTable("merchant_webhooks", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   modifiedAt: timestamp("modified_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({ merchantIndex: index("merchant_webhooks_merchant_idx").on(table.merchantId) }));
+
+export const merchantWebhookDeliveriesTable = pgTable("merchant_webhook_deliveries", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  merchantId: integer("merchant_id").notNull().references(() => merchantsTable.id, { onDelete: "cascade" }),
+  webhookId: integer("webhook_id").notNull().references(() => merchantWebhooksTable.id, { onDelete: "cascade" }),
+  event: varchar("event", { length: 100 }).notNull(),
+  payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
+  status: webhookDeliveryStatusEnum("status").default("PENDING").notNull(),
+  attempts: integer("attempts").default(0).notNull(),
+  nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).defaultNow().notNull(),
+  lastStatusCode: integer("last_status_code"),
+  lastError: text("last_error"),
+  deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  pendingIndex: index("merchant_webhook_deliveries_pending_idx").on(table.status, table.nextAttemptAt),
+  merchantIndex: index("merchant_webhook_deliveries_merchant_idx").on(table.merchantId, table.createdAt),
+}));
 
 export const merchantAuditLogsTable = pgTable("merchant_audit_logs", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
