@@ -1,15 +1,20 @@
 services:
-  postgres-auth:
+  postgres:
     image: postgres:17
-    container_name: finflow-postgres-auth
+    container_name: finflow-postgres
     environment:
-      POSTGRES_USER: auth
-      POSTGRES_PASSWORD: auth
-      POSTGRES_DB: auth_db
+      POSTGRES_USER: finflow
+      POSTGRES_PASSWORD: finflow
+      POSTGRES_DB: finflow
     ports:
       - "5433:5432"
     volumes:
-      - postgres_auth_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U finflow -d finflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
-  postgres_auth_data:
+  postgres_data:
