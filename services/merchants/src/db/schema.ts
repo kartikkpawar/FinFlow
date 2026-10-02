@@ -3,20 +3,21 @@ import {
   index,
   integer,
   jsonb,
-  pgEnum,
-  pgTable,
+  pgSchema,
   text,
   timestamp,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
 
-export const merchantStatusEnum = pgEnum("merchant_status", ["PENDING", "ACTIVE", "SUSPENDED", "INACTIVE", "REJECTED"]);
-export const merchantRoleEnum = pgEnum("merchant_role", ["MERCHANT_ADMIN", "MERCHANT_USER"]);
-export const invitationStatusEnum = pgEnum("merchant_invitation_status", ["PENDING", "ACCEPTED", "EXPIRED", "REVOKED"]);
-export const webhookDeliveryStatusEnum = pgEnum("merchant_webhook_delivery_status", ["PENDING", "DELIVERED", "FAILED"]);
+const merchantSchema = pgSchema("merchant");
 
-export const merchantsTable = pgTable("merchants", {
+export const merchantStatusEnum = merchantSchema.enum("merchant_status", ["PENDING", "ACTIVE", "SUSPENDED", "INACTIVE", "REJECTED"]);
+export const merchantRoleEnum = merchantSchema.enum("merchant_role", ["MERCHANT_ADMIN", "MERCHANT_USER"]);
+export const invitationStatusEnum = merchantSchema.enum("merchant_invitation_status", ["PENDING", "ACCEPTED", "EXPIRED", "REVOKED"]);
+export const webhookDeliveryStatusEnum = merchantSchema.enum("merchant_webhook_delivery_status", ["PENDING", "DELIVERED", "FAILED"]);
+
+export const merchantsTable = merchantSchema.table("merchants", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   name: varchar("name", { length: 255 }).notNull(),
   businessName: varchar("business_name", { length: 255 }).notNull(),
@@ -27,7 +28,7 @@ export const merchantsTable = pgTable("merchants", {
   modifiedAt: timestamp("modified_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
-export const merchantUsersTable = pgTable("merchant_users", {
+export const merchantUsersTable = merchantSchema.table("merchant_users", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   merchantId: integer("merchant_id").notNull().references(() => merchantsTable.id, { onDelete: "cascade" }),
   userId: integer("user_id").notNull(),
@@ -39,7 +40,7 @@ export const merchantUsersTable = pgTable("merchant_users", {
   userIndex: index("merchant_users_user_id_idx").on(table.userId),
 }));
 
-export const merchantSettingsTable = pgTable("merchant_settings", {
+export const merchantSettingsTable = merchantSchema.table("merchant_settings", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   merchantId: integer("merchant_id").notNull().unique().references(() => merchantsTable.id, { onDelete: "cascade" }),
   timezone: varchar("timezone", { length: 100 }).default("UTC").notNull(),
@@ -50,7 +51,7 @@ export const merchantSettingsTable = pgTable("merchant_settings", {
   modifiedAt: timestamp("modified_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
-export const merchantInvitationsTable = pgTable("merchant_invitations", {
+export const merchantInvitationsTable = merchantSchema.table("merchant_invitations", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   merchantId: integer("merchant_id").notNull().references(() => merchantsTable.id, { onDelete: "cascade" }),
   email: varchar("email", { length: 255 }).notNull(),
@@ -63,7 +64,7 @@ export const merchantInvitationsTable = pgTable("merchant_invitations", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({ merchantEmailIndex: index("merchant_invitations_merchant_email_idx").on(table.merchantId, table.email) }));
 
-export const merchantApiKeysTable = pgTable("merchant_api_keys", {
+export const merchantApiKeysTable = merchantSchema.table("merchant_api_keys", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   merchantId: integer("merchant_id").notNull().references(() => merchantsTable.id, { onDelete: "cascade" }),
   name: varchar("name", { length: 100 }).notNull(),
@@ -76,7 +77,7 @@ export const merchantApiKeysTable = pgTable("merchant_api_keys", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({ merchantIndex: index("merchant_api_keys_merchant_idx").on(table.merchantId) }));
 
-export const merchantWebhooksTable = pgTable("merchant_webhooks", {
+export const merchantWebhooksTable = merchantSchema.table("merchant_webhooks", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   merchantId: integer("merchant_id").notNull().references(() => merchantsTable.id, { onDelete: "cascade" }),
   url: varchar("url", { length: 2048 }).notNull(),
@@ -89,7 +90,7 @@ export const merchantWebhooksTable = pgTable("merchant_webhooks", {
   modifiedAt: timestamp("modified_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({ merchantIndex: index("merchant_webhooks_merchant_idx").on(table.merchantId) }));
 
-export const merchantWebhookDeliveriesTable = pgTable("merchant_webhook_deliveries", {
+export const merchantWebhookDeliveriesTable = merchantSchema.table("merchant_webhook_deliveries", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   merchantId: integer("merchant_id").notNull().references(() => merchantsTable.id, { onDelete: "cascade" }),
   webhookId: integer("webhook_id").notNull().references(() => merchantWebhooksTable.id, { onDelete: "cascade" }),
@@ -107,7 +108,7 @@ export const merchantWebhookDeliveriesTable = pgTable("merchant_webhook_deliveri
   merchantIndex: index("merchant_webhook_deliveries_merchant_idx").on(table.merchantId, table.createdAt),
 }));
 
-export const merchantAuditLogsTable = pgTable("merchant_audit_logs", {
+export const merchantAuditLogsTable = merchantSchema.table("merchant_audit_logs", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   merchantId: integer("merchant_id").notNull().references(() => merchantsTable.id, { onDelete: "cascade" }),
   actorUserId: integer("actor_user_id").notNull(),
