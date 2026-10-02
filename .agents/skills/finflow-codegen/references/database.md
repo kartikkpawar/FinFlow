@@ -4,13 +4,13 @@
 
 - PostgreSQL
 - Drizzle ORM
-- one shared physical PostgreSQL database
-- logical schema ownership remains service-specific
+- one physical PostgreSQL database per service
+- service-specific database ownership
 
 ## Rules
 
-- each service owns its own tables and schema definitions
-- services may use service-specific DB environment variables that point to the shared PostgreSQL database
+- each service owns its own PostgreSQL database, tables, and schema definitions
+- service-specific DB environment variables must point to that service's database
 - never query another service's tables directly from application code
 - no cross-service foreign keys
 - `src/db/schema.ts` is the source of truth for service-owned schema
@@ -23,31 +23,56 @@
 
 ## Database topology
 
-FinFlow currently uses one PostgreSQL database for all services. This is a
-physical infrastructure decision, not a change to service ownership.
+FinFlow uses a separate PostgreSQL database for each service. This provides
+physical database isolation while preserving service ownership boundaries.
 
-Services must continue to behave as independently owned data domains. Each
-service should retain its own database module and service-specific connection
-environment variable, even when those variables point to the same PostgreSQL
-database.
+Current local databases:
 
-This keeps the code ready for future database separation without changing the
-domain/service boundaries.
+- Auth Service -> `finflow_auth`
+- Merchant Service -> `finflow_merchants`
+
+Local Docker ports:
+
+- Auth PostgreSQL -> `5433`
+- Merchant PostgreSQL -> `5434`
+
+Each service keeps its own connection environment variable:
+
+- `AUTH_DB_URL`
+- `MERCHANTS_DB_URL`
+
+Never point service database variables at the same database unless the
+architecture is explicitly changed again.
 
 ## Schema synchronization
 
 Drizzle schemas live in each service under `src/db/schema.ts`.
 
-Use:
+From the repository root:
 
 ```text
 npm run db:push
 ```
 
-or the equivalent workspace command for the target service.
+This pushes each service schema to its own database in sequence.
+
+For an individual service, run its workspace `db:push` command.
 
 Do not use a committed SQL migration directory as the FinFlow schema-change
 workflow. Generated `drizzle/*.sql` files must not be created or committed.
+
+## Drizzle Studio
+
+From the repository root:
+
+```text
+npm run db:studio
+```
+
+This starts both service-specific Drizzle Studio instances:
+
+- Auth -> `http://localhost:4983`
+- Merchant -> `http://localhost:4984`
 
 ## Merchant statuses currently known
 

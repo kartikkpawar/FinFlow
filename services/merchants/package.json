@@ -8,7 +8,8 @@
     "start": "tsx src/index.ts",
     "check-types": "tsc --noEmit",
     "build": "tsc",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio --port 4984"
   },
   "keywords": [],
   "author": "",
