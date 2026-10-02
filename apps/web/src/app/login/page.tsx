@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/auth-context";
 
@@ -16,7 +17,7 @@ function EyeIcon({ visible }: { visible: boolean }) {
 
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true" className="h-5 w-5">
-      <path strokeLinecap="round" strokeLinejoin="round" d="m3 3 18 18M10.58 10.58a2 2 0 0 0 2.83 2.83M9.88 5.1A10.5 10.5 0 0 1 12 4.88c6.25 0 9.75 7.12 9.75 7.12a17.6 17.6 0 0 1-3.18 3.94M6.61 6.62C3.75 8.32 2.25 12 2.25 12s3.5 7.12 9.75 7.12a10.5 10.5 0 0 0 4.12-.82" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="m3 3 18 18M10.58 10.58a2 2 0 0 0 2.83 2.83M9.88 5.1A10.5 10.5 0 0 1 12 4.88c6.25 0 9.75 7.12 9.75 7.12a17.6 17.6 0 0 1-3.18 3.94M6.61 6.62C3.75 8.32 2.25 12 2.25 12s3.5 7.12 9.75 7.12a10.5 10.5 0 0 1 4.12-.82" />
     </svg>
   );
 }
@@ -90,6 +91,10 @@ export default function LoginPage() {
                 {submitting ? "Signing in..." : "Sign in"}
               </button>
             </form>
+
+            <p className="mt-6 text-center text-sm text-muted">
+              New to FinFlow? <Link href="/signup" className="font-semibold text-brand hover:underline">Create an account</Link>
+            </p>
           </div>
         </section>
       </div>

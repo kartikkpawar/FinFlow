@@ -23,11 +23,11 @@ export const registerUser = asyncHandler(
       .where(or(eq(users.email, email), eq(users.phone, phone)));
 
     if (user.length) {
-      const respMessage = user[0]?.phone
-        ? responseMessage.USER.PHONE_ALREADY_EXISTS
-        : responseMessage.USER.EMAIL_ALREADY_EXISTS;
+      const respMessage = user[0]?.email === email
+        ? responseMessage.USER.EMAIL_ALREADY_EXISTS
+        : responseMessage.USER.PHONE_ALREADY_EXISTS;
 
-      next(new AppError(STATUS_CODES["CONFLICT"], respMessage));
+      return next(new AppError(STATUS_CODES["CONFLICT"], respMessage));
     }
 
     const passwordHash = await bcryptjs.hash(password, 10);
@@ -43,7 +43,7 @@ export const registerUser = asyncHandler(
       .returning({ user_id: users.id, user_role: users.role });
 
     if (!newUser.length) {
-      next(
+      return next(
         new AppError(
           STATUS_CODES["INTERNAL_SERVER_ERROR"],
           responseMessage.GENERAL.SOMETHING_WENT_WRONG,
@@ -61,7 +61,7 @@ export const registerUser = asyncHandler(
       purpose: "email_verification",
     });
 
-    successResponse(
+    return successResponse(
       res,
       {
         message: responseMessage.USER.USER_CREATED,
