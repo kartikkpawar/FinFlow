@@ -1,5 +1,3 @@
-import type { MerchantRole } from "../types/merchant";
-
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ROLES = ["MERCHANT_ADMIN", "MERCHANT_USER"] as const;
 export type ManagedMerchantRole = (typeof ROLES)[number];
@@ -10,13 +8,11 @@ function stringField(value: unknown, field: string, max = 255) {
   if (result.length > max) throw new Error(`${field} must be at most ${max} characters`);
   return result;
 }
-
 function positiveInt(value: string | undefined, field: string) {
   const id = Number(value);
   if (!Number.isInteger(id) || id <= 0) throw new Error(`${field} must be a positive integer`);
   return id;
 }
-
 export function parseManagedMerchantId(value: string | undefined) { return positiveInt(value, "merchantId"); }
 export function parseManagedResourceId(value: string | undefined, field: string) { return positiveInt(value, field); }
 
@@ -27,16 +23,14 @@ export function validateMerchantUser(body: unknown) {
   if (!Number.isInteger(userId) || userId <= 0) throw new Error("userId must be a positive integer");
   const role = input.role ?? "MERCHANT_USER";
   if (typeof role !== "string" || !ROLES.includes(role as ManagedMerchantRole)) throw new Error("invalid merchant role");
-  return { userId, role: role as MerchantRole };
+  return { userId, role: role as ManagedMerchantRole };
 }
-
 export function validateMerchantUserUpdate(body: unknown) {
   if (!body || typeof body !== "object") throw new Error("request body is required");
   const role = (body as Record<string, unknown>).role;
   if (typeof role !== "string" || !ROLES.includes(role as ManagedMerchantRole)) throw new Error("invalid merchant role");
-  return { role: role as MerchantRole };
+  return { role: role as ManagedMerchantRole };
 }
-
 export function validateSettings(body: unknown) {
   if (!body || typeof body !== "object") throw new Error("request body is required");
   const input = body as Record<string, unknown>;
@@ -52,13 +46,12 @@ export function validateSettings(body: unknown) {
     result.notificationsEnabled = input.notificationsEnabled;
   }
   if (input.metadata !== undefined) {
-    if (!input.metadata || typeof input.metadata !== "object'".replace("'", "")) throw new Error("metadata must be an object");
+    if (!input.metadata || typeof input.metadata !== "object" || Array.isArray(input.metadata)) throw new Error("metadata must be an object");
     result.metadata = input.metadata as Record<string, unknown>;
   }
   if (!Object.keys(result).length) throw new Error("at least one field is required");
   return result;
 }
-
 export function validateInvitation(body: unknown) {
   if (!body || typeof body !== "object") throw new Error("request body is required");
   const input = body as Record<string, unknown>;
@@ -66,9 +59,8 @@ export function validateInvitation(body: unknown) {
   if (!EMAIL_REGEX.test(email)) throw new Error("email must be valid");
   const role = input.role ?? "MERCHANT_USER";
   if (typeof role !== "string" || !ROLES.includes(role as ManagedMerchantRole)) throw new Error("invalid merchant role");
-  return { email, role: role as MerchantRole };
+  return { email, role: role as ManagedMerchantRole };
 }
-
 export function validateApiKey(body: unknown) {
   if (!body || typeof body !== "object") throw new Error("request body is required");
   const input = body as Record<string, unknown>;
@@ -80,7 +72,6 @@ export function validateApiKey(body: unknown) {
   }
   return { name, expiresAt };
 }
-
 const WEBHOOK_EVENTS = ["payment.created", "payment.updated", "payment.failed", "merchant.updated"] as const;
 export function validateWebhook(body: unknown) {
   if (!body || typeof body !== "object") throw new Error("request body is required");
@@ -90,14 +81,11 @@ export function validateWebhook(body: unknown) {
   try { parsed = new URL(url); } catch { throw new Error("url must be valid"); }
   if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error("url must use http or https");
   const events = input.events ?? [];
-  if (!Array.isArray(events) || events.some((event) => typeof event !== "string" || !WEBHOOK_EVENTS.includes(event as (typeof WEBHOOK_EVENTS)[number]))) {
-    throw new Error(`events must contain only: ${WEBHOOK_EVENTS.join(", ")}`);
-  }
+  if (!Array.isArray(events) || events.some((event) => typeof event !== "string" || !WEBHOOK_EVENTS.includes(event as (typeof WEBHOOK_EVENTS)[number]))) throw new Error(`events must contain only: ${WEBHOOK_EVENTS.join(", ")}`);
   const enabled = input.enabled === undefined ? true : input.enabled;
   if (typeof enabled !== "boolean") throw new Error("enabled must be boolean");
   return { url, events: events as string[], enabled };
 }
-
 export function validateWebhookUpdate(body: unknown) {
   if (!body || typeof body !== "object") throw new Error("request body is required");
   const input = body as Record<string, unknown>;
