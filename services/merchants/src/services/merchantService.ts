@@ -26,7 +26,7 @@ function requirePermissionFromIdentity(identity: Identity, permission: "merchant
     ADMIN: ["merchant:read", "merchant:update"],
     SUPPORT: ["merchant:read"],
     MERCHANT_ADMIN: ["merchant:read", "merchant:update"],
-    MERCHANT_USER: [],
+    MERCHANT_USER: ["merchant:read"],
     ANALYST: [],
   };
   const permissions = permissionsByRole[identity.role] ?? [];
