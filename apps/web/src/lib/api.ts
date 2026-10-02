@@ -1,6 +1,6 @@
 import { showToast } from "@/components/toast";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const API_BASE_URL = "/api";
 
 export type ApiResponse<T> = {
   success?: boolean;
@@ -35,7 +35,7 @@ async function request<T>(path: string, options: RequestInit, token: string | nu
   } catch {
     throw new ApiError(
       0,
-      `Unable to connect to FinFlow API. Make sure the API Gateway is running at ${API_BASE_URL}.`,
+      "Unable to connect to FinFlow API. Make sure the API Gateway is running at http://localhost:3001.",
     );
   }
 }
