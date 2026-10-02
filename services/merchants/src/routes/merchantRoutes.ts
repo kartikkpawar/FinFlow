@@ -4,6 +4,24 @@ import { listMerchantsController } from "../controllers/listMerchantsController"
 import { getMerchantController } from "../controllers/getMerchantController";
 import { updateMerchantController } from "../controllers/updateMerchantController";
 import { updateMerchantStatusController } from "../controllers/updateMerchantStatusController";
+import { listMerchantUsersController } from "../controllers/listMerchantUsersController";
+import { createMerchantUserController } from "../controllers/createMerchantUserController";
+import { getMerchantUserController } from "../controllers/getMerchantUserController";
+import { updateMerchantUserController } from "../controllers/updateMerchantUserController";
+import { deleteMerchantUserController } from "../controllers/deleteMerchantUserController";
+import { getMerchantSettingsController } from "../controllers/getMerchantSettingsController";
+import { updateMerchantSettingsController } from "../controllers/updateMerchantSettingsController";
+import { createMerchantInvitationController } from "../controllers/createMerchantInvitationController";
+import { listMerchantInvitationsController } from "../controllers/listMerchantInvitationsController";
+import { deleteMerchantInvitationController } from "../controllers/deleteMerchantInvitationController";
+import { createMerchantApiKeyController } from "../controllers/createMerchantApiKeyController";
+import { listMerchantApiKeysController } from "../controllers/listMerchantApiKeysController";
+import { deleteMerchantApiKeyController } from "../controllers/deleteMerchantApiKeyController";
+import { createMerchantWebhookController } from "../controllers/createMerchantWebhookController";
+import { listMerchantWebhooksController } from "../controllers/listMerchantWebhooksController";
+import { updateMerchantWebhookController } from "../controllers/updateMerchantWebhookController";
+import { deleteMerchantWebhookController } from "../controllers/deleteMerchantWebhookController";
+import { listMerchantAuditLogsController } from "../controllers/listMerchantAuditLogsController";
 
 export const merchantRoutes = Router();
 
@@ -12,3 +30,27 @@ merchantRoutes.get("/", listMerchantsController);
 merchantRoutes.get("/:merchantId", getMerchantController);
 merchantRoutes.patch("/:merchantId", updateMerchantController);
 merchantRoutes.patch("/:merchantId/status", updateMerchantStatusController);
+
+merchantRoutes.get("/:merchantId/users", listMerchantUsersController);
+merchantRoutes.post("/:merchantId/users", createMerchantUserController);
+merchantRoutes.get("/:merchantId/users/:userId", getMerchantUserController);
+merchantRoutes.patch("/:merchantId/users/:userId", updateMerchantUserController);
+merchantRoutes.delete("/:merchantId/users/:userId", deleteMerchantUserController);
+
+merchantRoutes.get("/:merchantId/settings", getMerchantSettingsController);
+merchantRoutes.patch("/:merchantId/settings", updateMerchantSettingsController);
+
+merchantRoutes.post("/:merchantId/invitations", createMerchantInvitationController);
+merchantRoutes.get("/:merchantId/invitations", listMerchantInvitationsController);
+merchantRoutes.delete("/:merchantId/invitations/:invitationId", deleteMerchantInvitationController);
+
+merchantRoutes.post("/:merchantId/api-keys", createMerchantApiKeyController);
+merchantRoutes.get("/:merchantId/api-keys", listMerchantApiKeysController);
+merchantRoutes.delete("/:merchantId/api-keys/:keyId", deleteMerchantApiKeyController);
+
+merchantRoutes.post("/:merchantId/webhooks", createMerchantWebhookController);
+merchantRoutes.get("/:merchantId/webhooks", listMerchantWebhooksController);
+merchantRoutes.patch("/:merchantId/webhooks/:webhookId", updateMerchantWebhookController);
+merchantRoutes.delete("/:merchantId/webhooks/:webhookId", deleteMerchantWebhookController);
+
+merchantRoutes.get("/:merchantId/audit-logs", listMerchantAuditLogsController);
