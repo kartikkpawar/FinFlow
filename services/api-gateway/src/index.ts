@@ -12,6 +12,7 @@ import {
   successResponse,
 } from "@finflow/shared";
 import { resolve } from "node:path";
+import type { ServerResponse } from "node:http";
 import { secureSession } from "./middlewares/secureSession";
 import { secureAuth } from "./middlewares/authServiceMiddleware";
 
@@ -93,16 +94,18 @@ app.use(
     pathRewrite: (_path, req) => req.originalUrl,
     on: {
       error: (_error, _req, res) => {
-        if ("headersSent" in res && "writeHead" in res && "end" in res) {
-          if (res.headersSent) return;
-          res.writeHead(502, { "Content-Type": "application/json" });
-          res.end(
-            JSON.stringify({
-              success: false,
-              message: "Auth service is unavailable",
-            }),
-          );
-        }
+        if (!("writeHead" in res)) return;
+
+        const response = res as ServerResponse;
+        if (response.headersSent) return;
+
+        response.writeHead(502, { "Content-Type": "application/json" });
+        response.end(
+          JSON.stringify({
+            success: false,
+            message: "Auth service is unavailable",
+          }),
+        );
       },
     },
   }),
@@ -117,16 +120,18 @@ app.use(
     pathRewrite: (_path, req) => req.originalUrl,
     on: {
       error: (_error, _req, res) => {
-        if ("headersSent" in res && "writeHead" in res && "end" in res) {
-          if (res.headersSent) return;
-          res.writeHead(502, { "Content-Type": "application/json" });
-          res.end(
-            JSON.stringify({
-              success: false,
-              message: "Merchant service is unavailable",
-            }),
-          );
-        }
+        if (!("writeHead" in res)) return;
+
+        const response = res as ServerResponse;
+        if (response.headersSent) return;
+
+        response.writeHead(502, { "Content-Type": "application/json" });
+        response.end(
+          JSON.stringify({
+            success: false,
+            message: "Merchant service is unavailable",
+          }),
+        );
       },
     },
   }),
