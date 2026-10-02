@@ -3,15 +3,16 @@ import {
   boolean,
   index,
   integer,
-  pgEnum,
-  pgTable,
+  pgSchema,
   text,
   timestamp,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
 
-export const userRoleEnum = pgEnum("role", [
+const authSchema = pgSchema("auth");
+
+export const userRoleEnum = authSchema.enum("role", [
   "SUPER_ADMIN",
   "ADMIN",
   "MERCHANT_ADMIN",
@@ -20,7 +21,7 @@ export const userRoleEnum = pgEnum("role", [
   "SUPPORT",
 ]);
 
-export const users = pgTable("users", {
+export const users = authSchema.table("users", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
@@ -44,7 +45,7 @@ export const users = pgTable("users", {
     .notNull(),
 });
 
-export const sessions = pgTable("sessions", {
+export const sessions = authSchema.table("sessions", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: integer("user_id")
     .notNull()
