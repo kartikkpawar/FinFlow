@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/auth-context";
 import { getAuthenticatedRoute } from "@/features/auth/auth-routing";
+import { safeApiRequest } from "@/lib/api";
 
 function EyeIcon({ visible }: { visible: boolean }) {
   if (visible) {
@@ -61,15 +62,19 @@ export default function LoginPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
-    try {
+
+    const authenticated = await safeApiRequest(async () => {
       await login(email, password);
       router.replace(await getAuthenticatedRoute());
-    } catch {
-      // Expected API failures are handled by the API interceptor toast.
-      // Swallow the rejected promise here so Next.js does not surface it as an error overlay.
-    } finally {
+      return true;
+    });
+
+    if (!authenticated) {
       setSubmitting(false);
+      return;
     }
+
+    setSubmitting(false);
   }
 
   if (authLoading || (token && checkingSession)) {
