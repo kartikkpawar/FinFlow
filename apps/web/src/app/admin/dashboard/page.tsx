@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MerchantStatus, useMerchants } from "@/features/merchants/api";
+import { useMerchants } from "@/features/merchants/api";
 
 function Metric({ label, value, detail }: { label: string; value: number; detail: string }) {
   return <div className="rounded-2xl border border-border bg-white p-5 shadow-sm"><p className="text-sm font-medium text-muted">{label}</p><p className="mt-4 text-3xl font-bold tracking-tight text-ink">{value}</p><p className="mt-2 text-xs text-muted">{detail}</p></div>;
