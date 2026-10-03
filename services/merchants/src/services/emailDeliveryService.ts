@@ -9,14 +9,19 @@ const WEB_APP_URL = process.env.WEB_APP_URL;
 
 function getTransporter() {
   if (!SMTP_HOST || !SMTP_FROM) {
-    throw new Error("SMTP_HOST and SMTP_FROM must be configured for invitation email delivery");
+    throw new Error(
+      "SMTP_HOST and SMTP_FROM must be configured for invitation email delivery",
+    );
   }
 
   return nodemailer.createTransport({
     host: SMTP_HOST,
     port: SMTP_PORT,
     secure: SMTP_PORT === 465,
-    auth: SMTP_USER && SMTP_PASSWORD ? { user: SMTP_USER, pass: SMTP_PASSWORD } : undefined,
+    auth:
+      SMTP_USER && SMTP_PASSWORD
+        ? { user: SMTP_USER, pass: SMTP_PASSWORD }
+        : undefined,
   });
 }
 
@@ -26,7 +31,10 @@ export async function sendMerchantInvitationEmail(input: {
   role: string;
   token: string;
 }) {
-  if (!WEB_APP_URL) throw new Error("WEB_APP_URL must be configured for invitation email delivery");
+  if (!WEB_APP_URL)
+    throw new Error(
+      "WEB_APP_URL must be configured for invitation email delivery",
+    );
 
   const invitationUrl = `${WEB_APP_URL.replace(/\/$/, "")}/accept-invitation?token=${encodeURIComponent(input.token)}`;
   const transporter = getTransporter();
@@ -47,11 +55,15 @@ export async function sendMerchantInvitationEmail(input: {
 }
 
 function escapeHtml(value: string) {
-  return value.replace(/[&<>'"]/g, (character) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    "'": "&#39;",
-    '"': "&quot;",
-  })[character] ?? character);
+  return value.replace(
+    /[&<>'"]/g,
+    (character) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "'": "&#39;",
+        '"': "&quot;",
+      })[character] ?? character,
+  );
 }

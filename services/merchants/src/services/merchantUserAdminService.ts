@@ -40,7 +40,10 @@ export async function listPlatformMerchantUsers(
       modifiedAt: merchantUsersTable.modifiedAt,
     })
     .from(merchantUsersTable)
-    .innerJoin(merchantsTable, eq(merchantUsersTable.merchantId, merchantsTable.id))
+    .innerJoin(
+      merchantsTable,
+      eq(merchantUsersTable.merchantId, merchantsTable.id),
+    )
     .where(whereClause)
     .orderBy(desc(merchantUsersTable.createdAt))
     .limit(limit)
@@ -49,7 +52,10 @@ export async function listPlatformMerchantUsers(
   const countRows = await db
     .select({ id: merchantUsersTable.id })
     .from(merchantUsersTable)
-    .innerJoin(merchantsTable, eq(merchantUsersTable.merchantId, merchantsTable.id))
+    .innerJoin(
+      merchantsTable,
+      eq(merchantUsersTable.merchantId, merchantsTable.id),
+    )
     .where(whereClause);
 
   const total = countRows.length;

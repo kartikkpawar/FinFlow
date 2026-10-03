@@ -8,15 +8,27 @@ function positiveInt(value: unknown, fallback: number) {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-export async function listPlatformMerchantUsersController(req: Request, res: Response) {
+export async function listPlatformMerchantUsersController(
+  req: Request,
+  res: Response,
+) {
   const identity = getIdentity(req);
   const page = positiveInt(req.query.page, 1);
   const limit = Math.min(100, positiveInt(req.query.limit, 20));
-  const search = typeof req.query.search === "string" ? req.query.search.trim() : undefined;
-  const merchantId = req.query.merchantId ? positiveInt(req.query.merchantId, 0) : undefined;
+  const search =
+    typeof req.query.search === "string" ? req.query.search.trim() : undefined;
+  const merchantId = req.query.merchantId
+    ? positiveInt(req.query.merchantId, 0)
+    : undefined;
 
   return successResponse(
     res,
-    await listPlatformMerchantUsers(identity, page, limit, search || undefined, merchantId || undefined),
+    await listPlatformMerchantUsers(
+      identity,
+      page,
+      limit,
+      search || undefined,
+      merchantId || undefined,
+    ),
   );
 }

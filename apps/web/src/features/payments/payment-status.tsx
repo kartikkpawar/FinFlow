@@ -9,18 +9,29 @@ const styles: Record<string, string> = {
   EXPIRED: "bg-slate-100 text-slate-600 ring-slate-500/10",
 };
 
-export function StatusBadge({ status }: { status: PaymentStatus | RefundStatus | string }) {
+export function StatusBadge({
+  status,
+}: {
+  status: PaymentStatus | RefundStatus | string;
+}) {
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ring-1 ring-inset ${styles[status] ?? styles.PENDING}`}>
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ring-1 ring-inset ${styles[status] ?? styles.PENDING}`}
+    >
       {status.replaceAll("_", " ")}
     </span>
   );
 }
 
 export function formatMoney(amount: number, currency: string) {
-  return new Intl.NumberFormat("en-IN", { style: "currency", currency }).format(amount / 100);
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency }).format(
+    amount / 100,
+  );
 }
 
 export function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+  return new Intl.DateTimeFormat("en-IN", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
 }

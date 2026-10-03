@@ -16,6 +16,16 @@ export type RefundProviderResult = {
 
 export interface PaymentProvider {
   readonly name: string;
-  createPayment(input: { paymentId: number; amount: number; currency: string; attemptNumber: number }): Promise<PaymentProviderResult>;
-  createRefund(input: { paymentId: number; refundId: number; amount: number; currency: string }): Promise<RefundProviderResult>;
+  createPayment(input: {
+    paymentId: number;
+    amount: number;
+    currency: string;
+    attemptNumber: number;
+  }): Promise<PaymentProviderResult>;
+  createRefund(input: {
+    paymentId: number;
+    refundId: number;
+    amount: number;
+    currency: string;
+  }): Promise<RefundProviderResult>;
 }

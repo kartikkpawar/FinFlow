@@ -11,12 +11,22 @@ export const metadata: Metadata = {
   description: "FinFlow financial operations platform",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <body>
-        <QueryProvider><AuthProvider>{children}</AuthProvider></QueryProvider>
-        <ToastContainer position="top-right" autoClose={4000} newestOnTop pauseOnFocusLoss pauseOnHover />
+        <QueryProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </QueryProvider>
+        <ToastContainer
+          position="top-right"
+          autoClose={4000}
+          newestOnTop
+          pauseOnFocusLoss
+          pauseOnHover
+        />
       </body>
     </html>
   );

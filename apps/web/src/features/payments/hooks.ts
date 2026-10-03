@@ -9,7 +9,11 @@ import {
   listPaymentRefunds,
   listPayments,
 } from "./api";
-import type { CreatePaymentInput, CreateRefundInput, PaymentFilters } from "./types";
+import type {
+  CreatePaymentInput,
+  CreateRefundInput,
+  PaymentFilters,
+} from "./types";
 
 export const paymentKeys = {
   all: ["payments"] as const,
@@ -19,14 +23,16 @@ export const paymentKeys = {
 };
 
 export function hasActiveMerchant() {
-  return typeof window !== "undefined" && Boolean(window.localStorage.getItem("finflow_merchant_id"));
+  return (
+    typeof window !== "undefined" &&
+    Boolean(window.localStorage.getItem("finflow_merchant_id"))
+  );
 }
 
 export function usePayments(filters: PaymentFilters = {}) {
   return useQuery({
     queryKey: paymentKeys.list(filters),
     queryFn: () => listPayments(filters),
-    enabled: hasActiveMerchant(),
   });
 }
 
@@ -34,7 +40,8 @@ export function usePayment(paymentId: number) {
   return useQuery({
     queryKey: paymentKeys.detail(paymentId),
     queryFn: () => getPayment(paymentId),
-    enabled: Number.isInteger(paymentId) && paymentId > 0 && hasActiveMerchant(),
+    enabled:
+      Number.isInteger(paymentId) && paymentId > 0 && hasActiveMerchant(),
   });
 }
 
@@ -42,7 +49,8 @@ export function useCreatePayment() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: CreatePaymentInput) => createPayment(input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: paymentKeys.all }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: paymentKeys.all }),
   });
 }
 
@@ -61,7 +69,8 @@ export function usePaymentRefunds(paymentId: number) {
   return useQuery({
     queryKey: paymentKeys.refunds(paymentId),
     queryFn: () => listPaymentRefunds(paymentId),
-    enabled: Number.isInteger(paymentId) && paymentId > 0 && hasActiveMerchant(),
+    enabled:
+      Number.isInteger(paymentId) && paymentId > 0 && hasActiveMerchant(),
   });
 }
 
@@ -70,8 +79,12 @@ export function useCreateRefund(paymentId: number) {
   return useMutation({
     mutationFn: (input: CreateRefundInput) => createRefund(paymentId, input),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: paymentKeys.detail(paymentId) });
-      queryClient.invalidateQueries({ queryKey: paymentKeys.refunds(paymentId) });
+      queryClient.invalidateQueries({
+        queryKey: paymentKeys.detail(paymentId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: paymentKeys.refunds(paymentId),
+      });
       queryClient.invalidateQueries({ queryKey: paymentKeys.all });
     },
   });
