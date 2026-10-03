@@ -24,12 +24,14 @@ import { listMerchantWebhooksController } from "../controllers/listMerchantWebho
 import { updateMerchantWebhookController } from "../controllers/updateMerchantWebhookController";
 import { deleteMerchantWebhookController } from "../controllers/deleteMerchantWebhookController";
 import { listMerchantAuditLogsController } from "../controllers/listMerchantAuditLogsController";
+import { resolveMerchantMembershipController } from "../controllers/resolveMerchantMembershipController";
 
 export const merchantRoutes = Router();
 
 merchantRoutes.post("/invitations/accept", acceptMerchantInvitationController);
 merchantRoutes.post("/", createMerchantController);
 merchantRoutes.get("/", listMerchantsController);
+merchantRoutes.get("/merchant-users/context", resolveMerchantMembershipController);
 merchantRoutes.get("/:merchantId", getMerchantController);
 merchantRoutes.patch("/:merchantId", updateMerchantController);
 merchantRoutes.patch("/:merchantId/status", updateMerchantStatusController);
