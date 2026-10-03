@@ -7,8 +7,8 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
-    "db:push": "npm run db:push --workspace=auth-service && npm run db:push --workspace=merchants-service",
-    "studio:all": "concurrently --names \"AUTH,MERCHANTS\" --prefix-colors \"cyan,magenta\" \"npm run db:studio --workspace=auth-service\" \"npm run db:studio --workspace=merchants-service\""
+    "db:push": "npm run db:push --workspace=auth-service && npm run db:push --workspace=merchants-service && npm run db:push --workspace=payments-service",
+    "studio:all": "concurrently --names \"AUTH,MERCHANTS,PAYMENTS\" --prefix-colors \"cyan,magenta,yellow\" \"npm run db:studio --workspace=auth-service\" \"npm run db:studio --workspace=merchants-service\" \"npm run db:studio --workspace=payments-service\""
   },
   "devDependencies": {
     "concurrently": "^10.0.5",
@@ -30,6 +30,7 @@
     "packages/shared",
     "services/api-gateway",
     "services/auth",
-    "services/merchants"
+    "services/merchants",
+    "services/payments"
   ]
 }
