@@ -47,7 +47,7 @@ export default function LoginPage() {
       } else if (merchants.items.length === 1) {
         router.replace("/dashboard");
       } else {
-        router.replace("/dashboard?selectMerchant=true");
+        router.replace("/merchants");
       }
     } finally {
       setSubmitting(false);
