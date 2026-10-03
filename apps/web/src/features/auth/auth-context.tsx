@@ -16,7 +16,7 @@ type AuthContextValue = {
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -52,11 +52,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(result.accessToken);
       setUser(result.user ?? null);
     },
-    logout() {
-      localStorage.removeItem("finflow_access_token");
-      localStorage.removeItem("finflow_user");
-      setToken(null);
-      setUser(null);
+    async logout() {
+      try {
+        await apiFetch("/auth/logout", { method: "POST" });
+      } finally {
+        localStorage.removeItem("finflow_access_token");
+        localStorage.removeItem("finflow_user");
+        setToken(null);
+        setUser(null);
+      }
     },
   }), [loading, token, user]);
 
