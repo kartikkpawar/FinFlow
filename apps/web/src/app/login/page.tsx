@@ -18,7 +18,7 @@ function EyeIcon({ visible }: { visible: boolean }) {
 
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true" className="h-5 w-5">
-      <path strokeLinecap="round" strokeLinejoin="round" d="m3 3 18 18M10.58 10.58a2 2 0 0 0 2.83 2.83M9.88 5.1A10.5 10.5 0 0 1 12 4.88c6.25 0 9.75 7.12 9.75 7.12a17.6 17.6 0 0 1-3.18 3.94M6.61 6.62C3.75 8.32 2.25 12 2.25 12s3.5 7.12 9.75 7.12 9.75-6 9.75-6-3.5-6-9.75-6S2.25 12 2.25 12Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="m3 3 18 18M10.58 10.58a2 2 0 0 0 2.83 2.83M9.88 5.1A10.5 10.5 0 0 1 12 4.88c6.25 0 9.75 7.12 9.75 7.12a17.6 17.6 0 0 1 9.75 7.12s-3.5 7.12-9.75 7.12S2.25 12 2.25 12s3.5-6 9.75-6c6.25 0 9.75 6 9.75 6s-3.5 6-9.75 6S2.25 12 2.25 12Z" />
     </svg>
   );
 }
@@ -64,6 +64,9 @@ export default function LoginPage() {
     try {
       await login(email, password);
       router.replace(await getAuthenticatedRoute());
+    } catch {
+      // Expected API failures are handled by the API interceptor toast.
+      // Swallow the rejected promise here so Next.js does not surface it as an error overlay.
     } finally {
       setSubmitting(false);
     }
