@@ -9,6 +9,10 @@ type ApiErrorResponse = {
   };
 };
 
+type RetryableRequestConfig = AxiosRequestConfig & {
+  _retry?: boolean;
+};
+
 const GENERIC_API_ERROR_MESSAGE =
   "Something went wrong. Please contact administrator";
 
@@ -60,6 +64,31 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+let refreshPromise: Promise<string> | null = null;
+
+async function refreshAccessToken(): Promise<string> {
+  if (!refreshPromise) {
+    refreshPromise = api
+      .post<{ data: { accessToken: string } }>("/auth/refresh-access-token")
+      .then((response) => {
+        const token = response.data.data.accessToken;
+        localStorage.setItem("finflow_access_token", token);
+        return token;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+
+  return refreshPromise;
+}
+
+function clearAuthState() {
+  localStorage.removeItem("finflow_access_token");
+  localStorage.removeItem("finflow_user");
+  localStorage.removeItem("finflow_merchant_id");
+}
+
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError<ApiErrorResponse>) => {
@@ -70,22 +99,17 @@ api.interceptors.response.use(
       error.response?.status === 401 &&
       originalRequest &&
       !originalRequest._retry &&
-      originalRequest.url !== "/auth/refresh-access-token"
+      !isRefreshRequest
     ) {
       originalRequest._retry = true;
 
       try {
-        const response = await api.post<{ data: { accessToken: string } }>(
-          "/auth/refresh-access-token",
-        );
-        const token = response.data.data.accessToken;
-        localStorage.setItem("finflow_access_token", token);
+        const token = await refreshAccessToken();
         originalRequest.headers = originalRequest.headers ?? {};
         originalRequest.headers.Authorization = `Bearer ${token}`;
         return api(originalRequest);
       } catch {
-        localStorage.removeItem("finflow_access_token");
-        localStorage.removeItem("finflow_user");
+        clearAuthState();
       }
     }
 
