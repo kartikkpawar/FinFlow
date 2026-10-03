@@ -111,31 +111,33 @@ app.use(
   }),
 );
 
-app.use(
-  "/merchants",
-  secureSession,
-  createProxyMiddleware({
-    target: MERCHANTS_SERVICE_URL,
-    changeOrigin: true,
-    pathRewrite: (path) => `/merchants${path}`,
-    on: {
-      error: (_error, _req, res) => {
-        if (!("writeHead" in res)) return;
+const merchantProxy = createProxyMiddleware({
+  target: MERCHANTS_SERVICE_URL,
+  changeOrigin: true,
+  pathRewrite: (path, req) => {
+    if (req.originalUrl.startsWith("/merchant-users")) return `/merchant-users${path}`;
+    return `/merchants${path}`;
+  },
+  on: {
+    error: (_error, _req, res) => {
+      if (!("writeHead" in res)) return;
 
-        const response = res as ServerResponse;
-        if (response.headersSent) return;
+      const response = res as ServerResponse;
+      if (response.headersSent) return;
 
-        response.writeHead(502, { "Content-Type": "application/json" });
-        response.end(
-          JSON.stringify({
-            success: false,
-            message: "Merchant service is unavailable",
-          }),
-        );
-      },
+      response.writeHead(502, { "Content-Type": "application/json" });
+      response.end(
+        JSON.stringify({
+          success: false,
+          message: "Merchant service is unavailable",
+        }),
+      );
     },
-  }),
-);
+  },
+});
+
+app.use("/merchant-users", secureSession, merchantProxy);
+app.use("/merchants", secureSession, merchantProxy);
 
 app.use((_req, _res, next) => {
   next(new AppError(400, "Route Not Found"));
