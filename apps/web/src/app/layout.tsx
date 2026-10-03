@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import "react-toastify/dist/ReactToastify.css";
 import "./globals.css";
+import { ToastContainer } from "react-toastify";
 import { AuthProvider } from "@/features/auth/auth-context";
 import { QueryProvider } from "@/lib/query-provider";
-import { ToastProvider } from "@/components/toast";
 
 export const metadata: Metadata = {
   title: "FinFlow",
@@ -16,7 +17,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <QueryProvider>
           <AuthProvider>{children}</AuthProvider>
         </QueryProvider>
-        <ToastProvider />
+        <ToastContainer position="top-right" autoClose={4000} newestOnTop pauseOnFocusLoss pauseOnHover />
       </body>
     </html>
   );
