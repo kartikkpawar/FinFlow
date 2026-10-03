@@ -8,8 +8,21 @@ type AuthenticatedUser = {
   role?: string | null;
 };
 
+function getStoredUser(): AuthenticatedUser | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const rawUser = localStorage.getItem("finflow_user");
+    return rawUser ? (JSON.parse(rawUser) as AuthenticatedUser) : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getAuthenticatedRoute(user?: AuthenticatedUser | null): Promise<string> {
-  if (user?.role === "SUPER_ADMIN") return "/admin/dashboard";
+  const authenticatedUser = user ?? getStoredUser();
+
+  if (authenticatedUser?.role === "SUPER_ADMIN") return "/admin/dashboard";
 
   const merchants = await apiFetch<AuthenticatedMerchantList>("/merchants?limit=100");
 
