@@ -34,13 +34,15 @@ app.use("/merchant-users", gatewayAuth, listPlatformMerchantUsersController);
 app.use("/merchants", gatewayAuth, merchantRoutes);
 app.use(errorHandler);
 
-app.listen(PORT, () =>
-  logger.info(`MERCHANTS-SERVICE: Listening on port: ${PORT}`),
-  setInterval(async () => {
+app.listen(PORT, () => {
+  logger.info(`MERCHANTS-SERVICE: Listening on port: ${PORT}`);
+  const worker = async () => {
     try {
       await processWebhookDeliveries();
     } catch (error) {
       logger.error(error, "Webhook delivery worker failed");
     }
-  }, 5_000),
-);
+  };
+  void worker();
+  setInterval(() => void worker(), 5_000);
+});
