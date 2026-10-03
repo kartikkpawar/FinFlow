@@ -11,7 +11,7 @@ type Mode = "choose" | "create" | "join";
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { user, loading } = useRequireAuth();
+  const { user, loading, logout } = useRequireAuth();
   const createMerchant = useCreateMerchant();
   const [mode, setMode] = useState<Mode>("choose");
   const [step, setStep] = useState(0);
@@ -54,11 +54,19 @@ export default function OnboardingPage() {
     }
   }
 
+  function handleLogout() {
+    logout();
+    router.replace("/login");
+  }
+
   return (
     <main className="min-h-screen overflow-hidden bg-surface">
       <div className="absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.16),_transparent_55%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.12),_transparent_45%)]" />
       <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col px-5 py-8 sm:px-8 lg:px-12">
-        <header className="flex items-center justify-between"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand text-sm font-bold text-white shadow-lg shadow-blue-500/20">F</div><span className="text-lg font-bold tracking-tight text-ink">FinFlow</span></div><span className="hidden text-sm text-muted sm:block">Account setup</span></header>
+        <header className="flex items-center justify-between">
+          <div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand text-sm font-bold text-white shadow-lg shadow-blue-500/20">F</div><span className="text-lg font-bold tracking-tight text-ink">FinFlow</span></div>
+          <div className="flex items-center gap-4"><span className="hidden text-sm text-muted sm:block">Account setup</span><button type="button" onClick={handleLogout} className="rounded-lg border border-border bg-white px-3 py-2 text-sm font-semibold text-ink transition hover:bg-gray-50">Logout</button></div>
+        </header>
         <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center py-12">
           <div className="mb-10 flex items-center justify-center gap-2 sm:gap-4">{steps.map((label, index) => <div key={label} className="flex items-center gap-2 sm:gap-4"><div className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold ${index <= step ? "bg-brand text-white" : "border border-border bg-white text-muted"}`}>{index < step ? "✓" : index + 1}</div><span className={`hidden text-sm font-medium sm:block ${index <= step ? "text-ink" : "text-muted"}`}>{label}</span>{index < steps.length - 1 && <div className={`h-px w-8 sm:w-20 ${index < step ? "bg-brand" : "bg-border"}`} />}</div>)}</div>
 
