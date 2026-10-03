@@ -59,11 +59,15 @@ async function emitMerchantWebhook(merchantId: number, event: string, payload: R
 export async function createMerchant(input: CreateMerchantInput, identity: Identity) {
   try {
     const [merchant] = await db.insert(merchantsTable).values(input).returning();
-    await db.insert(merchantUsersTable).values({
-      merchantId: merchant.id,
-      userId: identity.userId,
-      role: "MERCHANT_ADMIN",
-    });
+
+    if (identity.role !== "SUPER_ADMIN") {
+      await db.insert(merchantUsersTable).values({
+        merchantId: merchant.id,
+        userId: identity.userId,
+        role: "MERCHANT_ADMIN",
+      });
+    }
+
     await recordMerchantAudit(merchant.id, identity, "merchant.created", "merchant", merchant.id, { businessName: merchant.businessName });
     await emitMerchantWebhook(merchant.id, "merchant.updated", { action: "created", merchant });
     return merchant;

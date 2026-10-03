@@ -6,6 +6,7 @@ import {
   successResponse,
 } from "@finflow/shared";
 import { merchantRoutes } from "./routes/merchantRoutes";
+import { listPlatformMerchantUsersController } from "./controllers/listPlatformMerchantUsersController";
 import { gatewayAuth } from "./middleware/gatewayAuth";
 import { processWebhookDeliveries } from "./services/webhookDeliveryService";
 import { config } from "dotenv";
@@ -23,6 +24,7 @@ app.use(httpLogger);
 app.get("/health", (_req, res) =>
   successResponse(res, { service: "merchants-service" }),
 );
+app.use("/merchant-users", gatewayAuth, listPlatformMerchantUsersController);
 app.use("/merchants", gatewayAuth, merchantRoutes);
 app.use(errorHandler);
 
