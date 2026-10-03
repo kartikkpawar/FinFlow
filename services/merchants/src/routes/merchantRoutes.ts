@@ -9,6 +9,7 @@ import { listMerchantUsersController } from "../controllers/listMerchantUsersCon
 import { createMerchantUserController } from "../controllers/createMerchantUserController";
 import { getMerchantUserController } from "../controllers/getMerchantUserController";
 import { updateMerchantUserController } from "../controllers/updateMerchantUserController";
+import { updateMerchantUserStatusController } from "../controllers/updateMerchantUserStatusController";
 import { deleteMerchantUserController } from "../controllers/deleteMerchantUserController";
 import { getMerchantSettingsController } from "../controllers/getMerchantSettingsController";
 import { updateMerchantSettingsController } from "../controllers/updateMerchantSettingsController";
@@ -36,6 +37,7 @@ merchantRoutes.get("/:merchantId/users", listMerchantUsersController);
 merchantRoutes.post("/:merchantId/users", createMerchantUserController);
 merchantRoutes.get("/:merchantId/users/:userId", getMerchantUserController);
 merchantRoutes.patch("/:merchantId/users/:userId", updateMerchantUserController);
+merchantRoutes.patch("/:merchantId/users/:userId/status", updateMerchantUserStatusController);
 merchantRoutes.delete("/:merchantId/users/:userId", deleteMerchantUserController);
 merchantRoutes.get("/:merchantId/settings", getMerchantSettingsController);
 merchantRoutes.patch("/:merchantId/settings", updateMerchantSettingsController);
