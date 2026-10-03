@@ -4,7 +4,13 @@ export type AuthenticatedMerchantList = {
   items: Array<{ id: number }>;
 };
 
-export async function getAuthenticatedRoute(): Promise<string> {
+type AuthenticatedUser = {
+  role?: string | null;
+};
+
+export async function getAuthenticatedRoute(user?: AuthenticatedUser | null): Promise<string> {
+  if (user?.role === "SUPER_ADMIN") return "/admin/dashboard";
+
   const merchants = await apiFetch<AuthenticatedMerchantList>("/merchants?limit=100");
 
   if (merchants.items.length === 0) return "/onboarding";
