@@ -36,19 +36,46 @@ merchantRoutes.patch("/:merchantId/status", updateMerchantStatusController);
 merchantRoutes.get("/:merchantId/users", listMerchantUsersController);
 merchantRoutes.post("/:merchantId/users", createMerchantUserController);
 merchantRoutes.get("/:merchantId/users/:userId", getMerchantUserController);
-merchantRoutes.patch("/:merchantId/users/:userId", updateMerchantUserController);
-merchantRoutes.patch("/:merchantId/users/:userId/status", updateMerchantUserStatusController);
-merchantRoutes.delete("/:merchantId/users/:userId", deleteMerchantUserController);
+merchantRoutes.patch(
+  "/:merchantId/users/:userId",
+  updateMerchantUserController,
+);
+merchantRoutes.patch(
+  "/:merchantId/users/:userId/status",
+  updateMerchantUserStatusController,
+);
+merchantRoutes.delete(
+  "/:merchantId/users/:userId",
+  deleteMerchantUserController,
+);
 merchantRoutes.get("/:merchantId/settings", getMerchantSettingsController);
 merchantRoutes.patch("/:merchantId/settings", updateMerchantSettingsController);
-merchantRoutes.post("/:merchantId/invitations", createMerchantInvitationController);
-merchantRoutes.get("/:merchantId/invitations", listMerchantInvitationsController);
-merchantRoutes.delete("/:merchantId/invitations/:invitationId", deleteMerchantInvitationController);
+merchantRoutes.post(
+  "/:merchantId/invitations",
+  createMerchantInvitationController,
+);
+merchantRoutes.get(
+  "/:merchantId/invitations",
+  listMerchantInvitationsController,
+);
+merchantRoutes.delete(
+  "/:merchantId/invitations/:invitationId",
+  deleteMerchantInvitationController,
+);
 merchantRoutes.post("/:merchantId/api-keys", createMerchantApiKeyController);
 merchantRoutes.get("/:merchantId/api-keys", listMerchantApiKeysController);
-merchantRoutes.delete("/:merchantId/api-keys/:keyId", deleteMerchantApiKeyController);
+merchantRoutes.delete(
+  "/:merchantId/api-keys/:keyId",
+  deleteMerchantApiKeyController,
+);
 merchantRoutes.post("/:merchantId/webhooks", createMerchantWebhookController);
 merchantRoutes.get("/:merchantId/webhooks", listMerchantWebhooksController);
-merchantRoutes.patch("/:merchantId/webhooks/:webhookId", updateMerchantWebhookController);
-merchantRoutes.delete("/:merchantId/webhooks/:webhookId", deleteMerchantWebhookController);
+merchantRoutes.patch(
+  "/:merchantId/webhooks/:webhookId",
+  updateMerchantWebhookController,
+);
+merchantRoutes.delete(
+  "/:merchantId/webhooks/:webhookId",
+  deleteMerchantWebhookController,
+);
 merchantRoutes.get("/:merchantId/audit-logs", listMerchantAuditLogsController);

@@ -4,7 +4,10 @@ import { acceptInvitation } from "../services/merchantManagementService.js";
 import { getIdentity } from "../services/merchantService.js";
 import { validateAcceptInvitation } from "../schemas/management.js";
 
-export async function acceptMerchantInvitationController(req: Request, res: Response) {
+export async function acceptMerchantInvitationController(
+  req: Request,
+  res: Response,
+) {
   const identity = getIdentity(req);
   const input = validateAcceptInvitation(req.body);
   const result = await acceptInvitation(identity, input.token);

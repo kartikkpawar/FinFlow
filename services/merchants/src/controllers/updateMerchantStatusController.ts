@@ -7,7 +7,10 @@ import {
 } from "../services/merchantService";
 import { parseMerchantId, validateMerchantStatus } from "../schemas/merchant";
 
-export async function updateMerchantStatusController(req: Request, res: Response) {
+export async function updateMerchantStatusController(
+  req: Request,
+  res: Response,
+) {
   const identity = getIdentity(req);
   authorizeMerchantPermission(identity, "merchant:update");
 

@@ -6,12 +6,36 @@ import { assertScope } from "./merchantManagementService";
 import type { Identity } from "../types/merchant";
 import type { ManagedMerchantUserStatus } from "../schemas/management";
 
-export async function updateMerchantUserStatus(merchantId: number, userId: number, identity: Identity, status: ManagedMerchantUserStatus) {
+export async function updateMerchantUserStatus(
+  merchantId: number,
+  userId: number,
+  identity: Identity,
+  status: ManagedMerchantUserStatus,
+) {
   await assertScope(merchantId, identity);
-  const [current] = await db.select().from(merchantUsersTable).where(and(eq(merchantUsersTable.merchantId, merchantId), eq(merchantUsersTable.userId, userId))).limit(1);
-  if (!current) throw new AppError(STATUS_CODES.NOT_FOUND, "Merchant user not found");
+  const [current] = await db
+    .select()
+    .from(merchantUsersTable)
+    .where(
+      and(
+        eq(merchantUsersTable.merchantId, merchantId),
+        eq(merchantUsersTable.userId, userId),
+      ),
+    )
+    .limit(1);
+  if (!current)
+    throw new AppError(STATUS_CODES.NOT_FOUND, "Merchant user not found");
 
-  const [updated] = await db.update(merchantUsersTable).set({ status, modifiedAt: new Date() }).where(and(eq(merchantUsersTable.merchantId, merchantId), eq(merchantUsersTable.userId, userId))).returning();
+  const [updated] = await db
+    .update(merchantUsersTable)
+    .set({ status, modifiedAt: new Date() })
+    .where(
+      and(
+        eq(merchantUsersTable.merchantId, merchantId),
+        eq(merchantUsersTable.userId, userId),
+      ),
+    )
+    .returning();
   await db.insert(merchantAuditLogsTable).values({
     merchantId,
     actorUserId: identity.userId,

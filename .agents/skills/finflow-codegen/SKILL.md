@@ -374,34 +374,42 @@ dependency is merged, unless the user explicitly requests stacked PRs.
 Report concisely:
 
 ### Implemented
+
 - functionality delivered
 
 ### Files
+
 - created
 - modified
 
 ### Database
+
 - schema changes and schema synchronization workflow
 
 ### API
+
 - routes added/changed
 
 ### Authorization
+
 - roles/permissions/tenant checks
 
 ### Validation
+
 - typecheck: passed/failed/not run
 - lint: passed/failed/not run
 - tests: passed/failed/not run
 - build: passed/failed/not run
 
 ### PR
+
 - PR number and link
 - base branch
 - head branch
 - merge state if known
 
 ### Notes
+
 - limitations/follow-up work
 
 Never fabricate validation, commits, PRs, or deployment results.

@@ -11,7 +11,10 @@ export async function getMerchantController(req: Request, res: Response) {
   const identity = getIdentity(req);
   authorizeMerchantPermission(identity, "merchant:read");
 
-  const merchant = await getMerchant(parseMerchantId(req.params.merchantId), identity);
+  const merchant = await getMerchant(
+    parseMerchantId(req.params.merchantId),
+    identity,
+  );
 
   return successResponse(res, merchant);
 }

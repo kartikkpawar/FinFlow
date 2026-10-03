@@ -9,7 +9,10 @@ export type MockPaymentScenario =
   | "TIMEOUT"
   | "FAIL_TWICE_THEN_SUCCESS";
 
-export type MockRefundScenario = "SUCCESS" | "FAILED" | "PROCESSING" | "TIMEOUT";
+export type MockRefundScenario =
+  "SUCCESS" | "FAILED" | "PROCESSING" | "TIMEOUT";
 
-export const MOCK_PAYMENT_SCENARIO = (process.env.MOCK_PAYMENT_SCENARIO ?? "SUCCESS") as MockPaymentScenario;
-export const MOCK_REFUND_SCENARIO = (process.env.MOCK_REFUND_SCENARIO ?? "SUCCESS") as MockRefundScenario;
+export const MOCK_PAYMENT_SCENARIO = (process.env.MOCK_PAYMENT_SCENARIO ??
+  "SUCCESS") as MockPaymentScenario;
+export const MOCK_REFUND_SCENARIO = (process.env.MOCK_REFUND_SCENARIO ??
+  "SUCCESS") as MockRefundScenario;

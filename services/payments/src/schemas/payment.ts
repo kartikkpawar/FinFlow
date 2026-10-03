@@ -1,9 +1,22 @@
 import { createHash } from "node:crypto";
 
-export const PAYMENT_STATUSES = ["PENDING", "PROCESSING", "SUCCEEDED", "FAILED", "CANCELLED", "EXPIRED"] as const;
+export const PAYMENT_STATUSES = [
+  "PENDING",
+  "PROCESSING",
+  "SUCCEEDED",
+  "FAILED",
+  "CANCELLED",
+  "EXPIRED",
+] as const;
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
-export const REFUND_STATUSES = ["PENDING", "PROCESSING", "SUCCEEDED", "FAILED", "CANCELLED"] as const;
+export const REFUND_STATUSES = [
+  "PENDING",
+  "PROCESSING",
+  "SUCCEEDED",
+  "FAILED",
+  "CANCELLED",
+] as const;
 export type RefundStatus = (typeof REFUND_STATUSES)[number];
 
 export type CreatePaymentInput = {
@@ -40,29 +53,39 @@ function positiveInteger(value: unknown, field: string): number {
   return value;
 }
 
-function optionalString(value: unknown, field: string, maxLength: number): string | undefined {
+function optionalString(
+  value: unknown,
+  field: string,
+  maxLength: number,
+): string | undefined {
   if (value === undefined || value === null) return undefined;
   if (typeof value !== "string") throw new Error(`${field} must be a string`);
   const normalized = value.trim();
   if (!normalized) return undefined;
-  if (normalized.length > maxLength) throw new Error(`${field} must be at most ${maxLength} characters`);
+  if (normalized.length > maxLength)
+    throw new Error(`${field} must be at most ${maxLength} characters`);
   return normalized;
 }
 
 function metadata(value: unknown): Record<string, unknown> {
   if (value === undefined) return {};
-  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("metadata must be an object");
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    throw new Error("metadata must be an object");
   return value as Record<string, unknown>;
 }
 
-export function validateCreatePayment(body: unknown): Omit<CreatePaymentInput, "merchantId"> {
-  if (!body || typeof body !== "object") throw new Error("request body is required");
+export function validateCreatePayment(
+  body: unknown,
+): Omit<CreatePaymentInput, "merchantId"> {
+  if (!body || typeof body !== "object")
+    throw new Error("request body is required");
   const input = body as Record<string, unknown>;
   const amount = positiveInteger(input.amount, "amount");
   const reference = optionalString(input.reference, "reference", 255);
   if (!reference) throw new Error("reference is required");
   const currency = optionalString(input.currency, "currency", 3)?.toUpperCase();
-  if (!currency || !/^[A-Z]{3}$/.test(currency)) throw new Error("currency must be a valid 3-letter code");
+  if (!currency || !/^[A-Z]{3}$/.test(currency))
+    throw new Error("currency must be a valid 3-letter code");
 
   return {
     amount,
@@ -74,14 +97,19 @@ export function validateCreatePayment(body: unknown): Omit<CreatePaymentInput, "
   };
 }
 
-export function validateListPayments(query: Record<string, unknown>): Omit<ListPaymentsInput, "merchantId"> {
+export function validateListPayments(
+  query: Record<string, unknown>,
+): Omit<ListPaymentsInput, "merchantId"> {
   const page = query.page === undefined ? 1 : Number(query.page);
   const limit = query.limit === undefined ? 20 : Number(query.limit);
-  if (!Number.isInteger(page) || page < 1) throw new Error("page must be a positive integer");
-  if (!Number.isInteger(limit) || limit < 1 || limit > 100) throw new Error("limit must be between 1 and 100");
+  if (!Number.isInteger(page) || page < 1)
+    throw new Error("page must be a positive integer");
+  if (!Number.isInteger(limit) || limit < 1 || limit > 100)
+    throw new Error("limit must be between 1 and 100");
 
   const status = query.status as string | undefined;
-  if (status && !PAYMENT_STATUSES.includes(status as PaymentStatus)) throw new Error(`status must be one of: ${PAYMENT_STATUSES.join(", ")}`);
+  if (status && !PAYMENT_STATUSES.includes(status as PaymentStatus))
+    throw new Error(`status must be one of: ${PAYMENT_STATUSES.join(", ")}`);
 
   return {
     page,
@@ -92,8 +120,11 @@ export function validateListPayments(query: Record<string, unknown>): Omit<ListP
   };
 }
 
-export function validateCreateRefund(body: unknown): Omit<CreateRefundInput, "merchantId" | "paymentId"> {
-  if (!body || typeof body !== "object") throw new Error("request body is required");
+export function validateCreateRefund(
+  body: unknown,
+): Omit<CreateRefundInput, "merchantId" | "paymentId"> {
+  if (!body || typeof body !== "object")
+    throw new Error("request body is required");
   const input = body as Record<string, unknown>;
   return {
     amount: positiveInteger(input.amount, "amount"),
@@ -102,7 +133,10 @@ export function validateCreateRefund(body: unknown): Omit<CreateRefundInput, "me
   };
 }
 
-export function parsePositiveId(value: string | undefined, field: string): number {
+export function parsePositiveId(
+  value: string | undefined,
+  field: string,
+): number {
   const id = Number(value);
   return positiveInteger(id, field);
 }
@@ -110,7 +144,8 @@ export function parsePositiveId(value: string | undefined, field: string): numbe
 export function validateIdempotencyKey(value: string | undefined): string {
   const key = value?.trim();
   if (!key) throw new Error("Idempotency-Key header is required");
-  if (key.length > 255) throw new Error("Idempotency-Key must be at most 255 characters");
+  if (key.length > 255)
+    throw new Error("Idempotency-Key must be at most 255 characters");
   return key;
 }
 

@@ -21,24 +21,30 @@ The repository is authoritative if its current structure differs.
 ## Core services
 
 ### API Gateway
+
 Public entry point and routing layer. It may perform gateway-level authentication
 and cross-cutting middleware but must not own business-domain persistence.
 
 ### Auth Service
+
 Identity, credentials, sessions, JWT/access tokens, refresh tokens, email
 verification, login/logout, password reset.
 
 ### Merchant Service
+
 Merchant/tenant records, merchant lifecycle, memberships, merchant roles,
 configuration, API credentials and merchant-owned integration configuration.
 
 ### Task Service
+
 Tasks and work-management data.
 
 ### Media Service
+
 Upload/media metadata and object-storage orchestration.
 
 ### Payment Service
+
 Payment and transaction domain when implemented.
 
 ## Data ownership

@@ -21,10 +21,18 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function extractLoginPayload(payload: unknown): { accessToken: string; user?: User } {
-  const value = payload as { accessToken?: string; token?: string; user?: User };
+function extractLoginPayload(payload: unknown): {
+  accessToken: string;
+  user?: User;
+} {
+  const value = payload as {
+    accessToken?: string;
+    token?: string;
+    user?: User;
+  };
   const accessToken = value.accessToken ?? value.token;
-  if (!accessToken) throw new Error("Login response did not contain an access token");
+  if (!accessToken)
+    throw new Error("Login response did not contain an access token");
   return { accessToken, user: value.user };
 }
 
@@ -40,29 +48,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(false);
   }, []);
 
-  const value = useMemo<AuthContextValue>(() => ({
-    user,
-    token,
-    loading,
-    async login(email, password) {
-      const payload = await apiFetch<unknown>("/auth/login", { method: "POST", data: { email, password } });
-      const result = extractLoginPayload(payload);
-      localStorage.setItem("finflow_access_token", result.accessToken);
-      if (result.user) localStorage.setItem("finflow_user", JSON.stringify(result.user));
-      setToken(result.accessToken);
-      setUser(result.user ?? null);
-    },
-    async logout() {
-      try {
-        await apiFetch("/auth/logout", { method: "POST" });
-      } finally {
-        localStorage.removeItem("finflow_access_token");
-        localStorage.removeItem("finflow_user");
-        setToken(null);
-        setUser(null);
-      }
-    },
-  }), [loading, token, user]);
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      user,
+      token,
+      loading,
+      async login(email, password) {
+        const payload = await apiFetch<unknown>("/auth/login", {
+          method: "POST",
+          data: { email, password },
+        });
+        const result = extractLoginPayload(payload);
+        localStorage.setItem("finflow_access_token", result.accessToken);
+        if (result.user)
+          localStorage.setItem("finflow_user", JSON.stringify(result.user));
+        setToken(result.accessToken);
+        setUser(result.user ?? null);
+      },
+      async logout() {
+        try {
+          await apiFetch("/auth/logout", { method: "POST" });
+        } finally {
+          localStorage.removeItem("finflow_access_token");
+          localStorage.removeItem("finflow_user");
+          setToken(null);
+          setUser(null);
+        }
+      },
+    }),
+    [loading, token, user],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
@@ -76,6 +91,8 @@ export function useAuth() {
 export function useRequireAuth() {
   const auth = useAuth();
   const router = useRouter();
-  useEffect(() => { if (!auth.loading && !auth.token) router.replace("/login"); }, [auth.loading, auth.token, router]);
+  useEffect(() => {
+    if (!auth.loading && !auth.token) router.replace("/login");
+  }, [auth.loading, auth.token, router]);
   return auth;
 }

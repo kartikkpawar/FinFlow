@@ -92,8 +92,8 @@ function clearAuthState() {
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError<ApiErrorResponse>) => {
-    const originalRequest = error.config as RetryableRequestConfig | undefined;
-    const isRefreshRequest = originalRequest?.url === "/auth/refresh-access-token";
+    const originalRequest = error.config as
+      (AxiosRequestConfig & { _retry?: boolean }) | undefined;
 
     if (
       error.response?.status === 401 &&
