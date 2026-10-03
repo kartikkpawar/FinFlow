@@ -1,0 +1,1 @@
+export { gatewayAuth } from "./gatewayAuth";
