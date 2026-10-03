@@ -64,7 +64,7 @@ async function resolveMerchantRole(
 
   const body = (await response.json()) as {
     success?: boolean;
-    data?: { merchantId?: number; role?: string };
+    data?: { merchantId?: number; role?: UserPayload["role"] };
   };
 
   if (!body.success || body.data?.merchantId !== merchantId || !body.data.role) {
