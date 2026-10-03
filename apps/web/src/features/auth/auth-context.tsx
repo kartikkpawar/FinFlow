@@ -6,6 +6,7 @@ import { apiFetch } from "@/lib/api";
 
 type User = {
   id: number;
+  name: string;
   email: string;
   role: string;
 };
@@ -39,31 +40,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(false);
   }, []);
 
-  const value = useMemo<AuthContextValue>(
-    () => ({
-      user,
-      token,
-      loading,
-      async login(email, password) {
-        const payload = await apiFetch<unknown>("/auth/login", {
-          method: "POST",
-          data: { email, password },
-        });
-        const result = extractLoginPayload(payload);
-        localStorage.setItem("finflow_access_token", result.accessToken);
-        if (result.user) localStorage.setItem("finflow_user", JSON.stringify(result.user));
-        setToken(result.accessToken);
-        setUser(result.user ?? null);
-      },
-      logout() {
-        localStorage.removeItem("finflow_access_token");
-        localStorage.removeItem("finflow_user");
-        setToken(null);
-        setUser(null);
-      },
-    }),
-    [loading, token, user],
-  );
+  const value = useMemo<AuthContextValue>(() => ({
+    user,
+    token,
+    loading,
+    async login(email, password) {
+      const payload = await apiFetch<unknown>("/auth/login", { method: "POST", data: { email, password } });
+      const result = extractLoginPayload(payload);
+      localStorage.setItem("finflow_access_token", result.accessToken);
+      if (result.user) localStorage.setItem("finflow_user", JSON.stringify(result.user));
+      setToken(result.accessToken);
+      setUser(result.user ?? null);
+    },
+    logout() {
+      localStorage.removeItem("finflow_access_token");
+      localStorage.removeItem("finflow_user");
+      setToken(null);
+      setUser(null);
+    },
+  }), [loading, token, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
@@ -77,10 +72,6 @@ export function useAuth() {
 export function useRequireAuth() {
   const auth = useAuth();
   const router = useRouter();
-
-  useEffect(() => {
-    if (!auth.loading && !auth.token) router.replace("/login");
-  }, [auth.loading, auth.token, router]);
-
+  useEffect(() => { if (!auth.loading && !auth.token) router.replace("/login"); }, [auth.loading, auth.token, router]);
   return auth;
 }

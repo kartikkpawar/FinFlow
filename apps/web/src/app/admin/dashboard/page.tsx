@@ -1,43 +1,58 @@
 "use client";
 
 import Link from "next/link";
+import { Card, Col, Row, Statistic, Tag, Typography } from "antd";
 import { useMerchants } from "@/features/merchants/api";
 
-function Metric({ label, value, detail }: { label: string; value: number; detail: string }) {
-  return <div className="rounded-2xl border border-border bg-white p-5 shadow-sm"><p className="text-sm font-medium text-muted">{label}</p><p className="mt-4 text-3xl font-bold tracking-tight text-ink">{value}</p><p className="mt-2 text-xs text-muted">{detail}</p></div>;
-}
+const lifecycle = [
+  ["Pending", "Approve or reject"],
+  ["Active", "Suspend or deactivate"],
+  ["Suspended", "Reactivate or deactivate"],
+] as const;
 
 export default function SuperAdminDashboardPage() {
   const all = useMerchants({ page: 1, limit: 1 });
   const active = useMerchants({ page: 1, limit: 1, status: "ACTIVE" });
   const pending = useMerchants({ page: 1, limit: 1, status: "PENDING" });
   const suspended = useMerchants({ page: 1, limit: 1, status: "SUSPENDED" });
-
-  const total = all.data?.total ?? 0;
-  const activeCount = active.data?.total ?? 0;
-  const pendingCount = pending.data?.total ?? 0;
-  const suspendedCount = suspended.data?.total ?? 0;
   const loading = all.isLoading || active.isLoading || pending.isLoading || suspended.isLoading;
 
-  return <div className="space-y-7">
-    <section className="relative overflow-hidden rounded-3xl bg-ink px-7 py-8 text-white shadow-xl sm:px-9 sm:py-10">
-      <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl" />
-      <div className="relative flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
-        <div><span className="inline-flex rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-medium text-blue-100">Platform administration</span><h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Super Admin Dashboard</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">Manage FinFlow merchants and merchant memberships from one platform-wide workspace.</p></div>
-        <Link href="/admin/merchants" className="shrink-0 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-ink hover:bg-slate-100">Manage merchants →</Link>
-      </div>
-    </section>
+  return (
+    <div className="space-y-7">
+      <Card className="overflow-hidden border-0 bg-ink shadow-xl" styles={{ body: { padding: 32 } }}>
+        <div className="flex flex-col justify-between gap-6 text-white sm:flex-row sm:items-end">
+          <div>
+            <Tag color="blue">Platform administration</Tag>
+            <Typography.Title level={1} className="!mb-2 !mt-4 !text-white">Super Admin Dashboard</Typography.Title>
+            <Typography.Paragraph className="!mb-0 !max-w-2xl !text-slate-300">Manage FinFlow merchants and merchant memberships from one platform-wide workspace.</Typography.Paragraph>
+          </div>
+          <Link href="/admin/merchants"><span className="inline-flex rounded-xl bg-white px-5 py-3 text-sm font-semibold text-ink">Manage merchants →</span></Link>
+        </div>
+      </Card>
 
-    <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <Metric label="Total merchants" value={loading ? 0 : total} detail="All platform merchants" />
-      <Metric label="Active merchants" value={loading ? 0 : activeCount} detail="Currently active" />
-      <Metric label="Pending approval" value={loading ? 0 : pendingCount} detail="Awaiting review" />
-      <Metric label="Suspended" value={loading ? 0 : suspendedCount} detail="Currently suspended" />
-    </section>
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={12} xl={6}><Card><Statistic title="Total merchants" value={loading ? 0 : all.data?.total ?? 0} loading={loading} /><Typography.Text type="secondary">All platform merchants</Typography.Text></Card></Col>
+        <Col xs={24} sm={12} xl={6}><Card><Statistic title="Active merchants" value={loading ? 0 : active.data?.total ?? 0} loading={loading} /><Typography.Text type="secondary">Currently active</Typography.Text></Card></Col>
+        <Col xs={24} sm={12} xl={6}><Card><Statistic title="Pending approval" value={loading ? 0 : pending.data?.total ?? 0} loading={loading} /><Typography.Text type="secondary">Awaiting review</Typography.Text></Card></Col>
+        <Col xs={24} sm={12} xl={6}><Card><Statistic title="Suspended" value={loading ? 0 : suspended.data?.total ?? 0} loading={loading} /><Typography.Text type="secondary">Currently suspended</Typography.Text></Card></Col>
+      </Row>
 
-    <section className="grid gap-6 lg:grid-cols-2">
-      <div className="rounded-2xl border border-border bg-white p-6 shadow-sm"><h2 className="font-semibold text-ink">Merchant operations</h2><p className="mt-1 text-sm text-muted">Manage the complete merchant lifecycle.</p><div className="mt-5 grid gap-3 sm:grid-cols-2"><Link href="/admin/merchants" className="rounded-xl border border-border p-4 hover:bg-slate-50"><p className="text-sm font-semibold text-ink">Merchant directory</p><p className="mt-1 text-xs text-muted">Search, filter and update merchants.</p></Link><Link href="/admin/merchant-users" className="rounded-xl border border-border p-4 hover:bg-slate-50"><p className="text-sm font-semibold text-ink">Merchant users</p><p className="mt-1 text-xs text-muted">Review memberships across merchants.</p></Link></div></div>
-      <div className="rounded-2xl border border-border bg-white p-6 shadow-sm"><h2 className="font-semibold text-ink">Lifecycle controls</h2><p className="mt-1 text-sm text-muted">Supported merchant status transitions.</p><div className="mt-5 space-y-3 text-sm"><div className="flex justify-between"><span className="text-muted">Pending</span><span className="font-medium text-ink">Approve or reject</span></div><div className="flex justify-between"><span className="text-muted">Active</span><span className="font-medium text-ink">Suspend or deactivate</span></div><div className="flex justify-between"><span className="text-muted">Suspended</span><span className="font-medium text-ink">Reactivate or deactivate</span></div></div></div>
-    </section>
-  </div>;
+      <Row gutter={[24, 24]}>
+        <Col xs={24} lg={12}>
+          <Card title="Merchant operations" extra={<Tag>Platform</Tag>}>
+            <Typography.Paragraph type="secondary">Manage the complete merchant lifecycle.</Typography.Paragraph>
+            <Row gutter={[12, 12]}>
+              <Col xs={24} sm={12}><Link href="/admin/merchants"><Card size="small" hoverable title="Merchant directory">Search, filter and update merchants.</Card></Link></Col>
+              <Col xs={24} sm={12}><Link href="/admin/merchant-users"><Card size="small" hoverable title="Merchant users">Review memberships across merchants.</Card></Link></Col>
+            </Row>
+          </Card>
+        </Col>
+        <Col xs={24} lg={12}>
+          <Card title="Lifecycle controls">
+            {lifecycle.map(([status, action]) => <div key={status} className="flex justify-between border-b border-border py-3 last:border-0"><Typography.Text type="secondary">{status}</Typography.Text><Typography.Text strong>{action}</Typography.Text></div>)}
+          </Card>
+        </Col>
+      </Row>
+    </div>
+  );
 }

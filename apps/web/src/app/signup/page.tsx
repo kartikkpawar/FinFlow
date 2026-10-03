@@ -1,142 +1,46 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Alert, Button, Card, Form, Input, Typography } from "antd";
 import { useAuth } from "@/features/auth/auth-context";
 import { getAuthenticatedRoute } from "@/features/auth/auth-routing";
 import { apiFetch } from "@/lib/api";
 
-type RegisterResponse = {
-  email_verify: string;
-};
+type SignupForm = { name: string; email: string; phone: string; password: string; confirmPassword: string };
+type RegisterResponse = { email_verify: string };
 
 export default function SignupPage() {
   const router = useRouter();
   const { token, loading: authLoading } = useAuth();
-  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirmPassword: "" });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
     if (authLoading) return;
-
-    if (!token) {
-      setCheckingSession(false);
-      return;
-    }
-
+    if (!token) { setCheckingSession(false); return; }
     let active = true;
-
-    async function redirectAuthenticatedUser() {
-      try {
-        const route = await getAuthenticatedRoute();
-        if (active) router.replace(route);
-      } catch {
-        if (active) setCheckingSession(false);
-      }
-    }
-
-    redirectAuthenticatedUser();
-
-    return () => {
-      active = false;
-    };
+    getAuthenticatedRoute().then((route) => { if (active) router.replace(route); }).catch(() => { if (active) setCheckingSession(false); });
+    return () => { active = false; };
   }, [authLoading, router, token]);
 
-  function update(field: keyof typeof form, value: string) {
-    setForm((current) => ({ ...current, [field]: value }));
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleSubmit(values: SignupForm) {
     setError("");
-
-    if (form.password !== form.confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-
+    if (values.password !== values.confirmPassword) { setError("Passwords do not match."); return; }
     setSubmitting(true);
     try {
-      const result = await apiFetch<RegisterResponse>("/auth/register", {
-        method: "POST",
-        data: {
-          name: form.name,
-          email: form.email,
-          phone: form.phone,
-          password: form.password,
-        },
-      });
-
+      const result = await apiFetch<RegisterResponse>("/auth/register", { method: "POST", data: { name: values.name, email: values.email, phone: values.phone, password: values.password } });
       router.replace(`/verify-email?token=${encodeURIComponent(result.email_verify)}`);
-    } catch {
-      setError("We couldn't create your account. Please check your details and try again.");
-    } finally {
-      setSubmitting(false);
-    }
+    } catch { setError("We couldn't create your account. Please check your details and try again."); }
+    finally { setSubmitting(false); }
   }
 
-  if (authLoading || (token && checkingSession)) {
-    return <div className="flex min-h-screen items-center justify-center bg-slate-950 text-sm text-white">Checking your FinFlow session...</div>;
-  }
+  if (authLoading || (token && checkingSession)) return <div className="flex min-h-screen items-center justify-center bg-slate-950 text-sm text-white">Checking your FinFlow session...</div>;
 
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-8">
-      <div className="grid w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl lg:grid-cols-2">
-        <section className="hidden bg-slate-900 p-10 text-white lg:flex lg:flex-col lg:justify-between">
-          <div>
-            <div className="text-2xl font-bold">FinFlow</div>
-            <p className="mt-6 max-w-sm text-3xl font-semibold leading-tight">Create your financial operations workspace.</p>
-            <p className="mt-4 max-w-sm text-sm leading-6 text-slate-300">Start with your account, verify your email, then create your first merchant workspace.</p>
-          </div>
-          <p className="text-xs text-slate-400">Secure access through the FinFlow API Gateway.</p>
-        </section>
-
-        <section className="p-8 sm:p-12">
-          <div className="mx-auto max-w-md">
-            <p className="text-sm font-medium text-brand">Get started</p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight text-ink">Create your FinFlow account</h1>
-            <p className="mt-2 text-sm text-muted">Create an account to set up your first workspace.</p>
-
-            <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-gray-700">Full name</span>
-                <input required minLength={2} value={form.name} onChange={(event) => update("name", event.target.value)} autoComplete="name" className="w-full rounded-lg border border-border px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-blue-100" />
-              </label>
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-gray-700">Email</span>
-                <input required type="email" inputMode="email" value={form.email} onChange={(event) => update("email", event.target.value)} autoComplete="email" className="w-full rounded-lg border border-border px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-blue-100" />
-              </label>
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-gray-700">Phone</span>
-                <input required type="tel" inputMode="tel" value={form.phone} onChange={(event) => update("phone", event.target.value)} placeholder="+91 98765 43210" autoComplete="tel" className="w-full rounded-lg border border-border px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-blue-100" />
-              </label>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-gray-700">Password</span>
-                  <input required minLength={8} type="password" value={form.password} onChange={(event) => update("password", event.target.value)} autoComplete="new-password" className="w-full rounded-lg border border-border px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-blue-100" />
-                </label>
-                <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-gray-700">Confirm password</span>
-                  <input required minLength={8} type="password" value={form.confirmPassword} onChange={(event) => update("confirmPassword", event.target.value)} autoComplete="new-password" className="w-full rounded-lg border border-border px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-blue-100" />
-                </label>
-              </div>
-
-              {error && <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
-
-              <button disabled={submitting} className="w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
-                {submitting ? "Creating account..." : "Create account"}
-              </button>
-            </form>
-
-            <p className="mt-6 text-center text-sm text-muted">
-              Already have an account? <Link href="/login" className="font-semibold text-brand hover:underline">Sign in</Link>
-            </p>
-          </div>
-        </section>
-      </div>
-    </main>
-  );
+  return <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-8"><div className="grid w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl lg:grid-cols-2">
+    <section className="hidden bg-slate-900 p-10 text-white lg:flex lg:flex-col lg:justify-between"><div><div className="text-2xl font-bold">FinFlow</div><Typography.Title level={2} className="!mt-6 !text-white">Create your financial operations workspace.</Typography.Title><Typography.Paragraph className="!text-slate-300">Start with your account, verify your email, then create your first merchant workspace.</Typography.Paragraph></div><Typography.Text className="text-xs text-slate-400">Secure access through the FinFlow API Gateway.</Typography.Text></section>
+    <section className="p-8 sm:p-12"><Card bordered={false} className="mx-auto max-w-md shadow-none"><Typography.Text className="text-brand">Get started</Typography.Text><Typography.Title level={1} className="!mb-1 !mt-2">Create your FinFlow account</Typography.Title><Typography.Paragraph type="secondary">Create an account to set up your first workspace.</Typography.Paragraph>{error && <Alert className="mb-4" type="error" showIcon message={error} />}<Form layout="vertical" onFinish={handleSubmit} requiredMark="optional" className="mt-6"><Form.Item name="name" label="Full name" rules={[{ required: true }, { min: 2 }]}><Input autoComplete="name" /></Form.Item><Form.Item name="email" label="Email" rules={[{ required: true }, { type: "email" }]}><Input type="email" autoComplete="email" /></Form.Item><Form.Item name="phone" label="Phone" rules={[{ required: true }]}><Input type="tel" autoComplete="tel" placeholder="+91 98765 43210" /></Form.Item><div className="grid gap-4 sm:grid-cols-2"><Form.Item name="password" label="Password" rules={[{ required: true }, { min: 8 }]}><Input.Password autoComplete="new-password" /></Form.Item><Form.Item name="confirmPassword" label="Confirm password" rules={[{ required: true }, { min: 8 }]}><Input.Password autoComplete="new-password" /></Form.Item></div><Form.Item><Button type="primary" htmlType="submit" block size="large" loading={submitting}>Create account</Button></Form.Item></Form><Typography.Paragraph className="mt-6 text-center" type="secondary">Already have an account? <Link href="/login">Sign in</Link></Typography.Paragraph></Card></section>
+  </div></main>;
 }

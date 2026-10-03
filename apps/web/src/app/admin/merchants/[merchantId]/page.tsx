@@ -1,42 +1,37 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import { useParams } from "next/navigation";
+import { useState } from "react";
+import { Button, Card, Descriptions, Form, Input, Space, Tag, Typography } from "antd";
 import { MerchantStatus, useMerchant, useUpdateMerchant, useUpdateMerchantStatus } from "@/features/merchants/api";
 
 const transitions: Record<MerchantStatus, MerchantStatus[]> = { PENDING: ["ACTIVE", "REJECTED"], ACTIVE: ["SUSPENDED", "INACTIVE"], SUSPENDED: ["ACTIVE", "INACTIVE"], INACTIVE: ["ACTIVE"], REJECTED: [] };
+const statusColors: Record<MerchantStatus, string> = { PENDING: "gold", ACTIVE: "green", SUSPENDED: "orange", INACTIVE: "default", REJECTED: "red" };
+
+type MerchantForm = { name: string; businessName: string; email: string; phone: string };
 
 export default function AdminMerchantDetailsPage() {
   const params = useParams<{ merchantId: string }>();
-  const merchantId = params.merchantId;
-  const query = useMerchant(merchantId);
-  const update = useUpdateMerchant(Number(merchantId));
-  const updateStatus = useUpdateMerchantStatus(Number(merchantId));
-  const merchant = query.data;
+  const merchantId = Number(params.merchantId);
+  const query = useMerchant(params.merchantId);
+  const update = useUpdateMerchant(merchantId);
+  const updateStatus = useUpdateMerchantStatus(merchantId);
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ name: "", businessName: "", email: "", phone: "" });
+  const merchant = query.data;
 
-  if (query.isLoading) return <div className="p-10 text-sm text-muted">Loading merchant...</div>;
-  if (query.isError || !merchant) return <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">Unable to load merchant.</div>;
+  if (query.isLoading) return <Card loading />;
+  if (query.isError || !merchant) return <Card><Typography.Text type="danger">Unable to load merchant.</Typography.Text></Card>;
 
   const available = transitions[merchant.status];
-
-  function beginEdit() {
-    setForm({ name: merchant.name, businessName: merchant.businessName, email: merchant.email, phone: merchant.phone });
-    setEditing(true);
-  }
+  const initialValues: MerchantForm = { name: merchant.name, businessName: merchant.businessName, email: merchant.email, phone: merchant.phone };
 
   return <div className="space-y-6">
-    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><Link href="/admin/merchants" className="text-sm font-medium text-brand hover:underline">← Merchants</Link><h1 className="mt-2 text-2xl font-bold tracking-tight text-ink">{merchant.businessName}</h1><p className="mt-1 text-sm text-muted">Merchant #{merchant.id}</p></div><div className="flex gap-2"><StatusBadge status={merchant.status} /> <button onClick={beginEdit} className="rounded-lg border border-border bg-white px-3 py-2 text-sm font-semibold text-ink">Edit</button>{available.map((status) => <button key={status} disabled={updateStatus.isPending} onClick={() => updateStatus.mutate(status)} className="rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{status === "ACTIVE" ? "Activate" : status === "REJECTED" ? "Reject" : status === "SUSPENDED" ? "Suspend" : "Deactivate"}</button>)}</div></div>
+    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><Link href="/admin/merchants">← Merchants</Link><Typography.Title level={2} className="!mb-1 !mt-2">{merchant.businessName}</Typography.Title><Typography.Text type="secondary">Merchant #{merchant.id}</Typography.Text></div><Space wrap><Tag color={statusColors[merchant.status]}>{merchant.status}</Tag><Button onClick={() => setEditing((value) => !value)}>{editing ? "Cancel edit" : "Edit"}</Button>{available.map((status) => <Button key={status} type="primary" danger={status === "REJECTED"} loading={updateStatus.isPending} onClick={() => updateStatus.mutate(status)}>{status === "ACTIVE" ? "Activate" : status === "REJECTED" ? "Reject" : status === "SUSPENDED" ? "Suspend" : "Deactivate"}</Button>)}</Space></div>
 
-    {editing && <form onSubmit={(event) => { event.preventDefault(); update.mutate(form, { onSuccess: () => setEditing(false) }); }} className="grid gap-3 rounded-2xl border border-border bg-white p-5 shadow-sm md:grid-cols-2"><input required value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Contact name" className="rounded-lg border border-border px-3 py-2.5 text-sm" /><input required value={form.businessName} onChange={(event) => setForm({ ...form, businessName: event.target.value })} placeholder="Business name" className="rounded-lg border border-border px-3 py-2.5 text-sm" /><input required type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} placeholder="Email" className="rounded-lg border border-border px-3 py-2.5 text-sm" /><input required type="tel" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} placeholder="Phone" className="rounded-lg border border-border px-3 py-2.5 text-sm" /><div className="flex gap-2 md:col-span-2"><button disabled={update.isPending} className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{update.isPending ? "Saving..." : "Save changes"}</button><button type="button" onClick={() => setEditing(false)} className="rounded-lg border border-border px-4 py-2 text-sm font-semibold">Cancel</button></div></form>}
+    {editing && <Card title="Edit merchant"><Form layout="vertical" initialValues={initialValues} onFinish={(values: MerchantForm) => update.mutate(values, { onSuccess: () => setEditing(false) })}><div className="grid gap-x-4 md:grid-cols-2"><Form.Item name="name" label="Contact name" rules={[{ required: true }]}><Input /></Form.Item><Form.Item name="businessName" label="Business name" rules={[{ required: true }]}><Input /></Form.Item><Form.Item name="email" label="Email" rules={[{ required: true, type: "email" }]}><Input /></Form.Item><Form.Item name="phone" label="Phone" rules={[{ required: true }]}><Input /></Form.Item></div><Button type="primary" htmlType="submit" loading={update.isPending}>Save changes</Button></Form></Card>}
 
-    <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><Info label="Contact" value={merchant.name} /><Info label="Email" value={merchant.email} /><Info label="Phone" value={merchant.phone} /><Info label="Created" value={new Date(merchant.createdAt).toLocaleDateString()} /></section>
-
-    <section className="rounded-2xl border border-border bg-white p-6 shadow-sm"><h2 className="font-semibold text-ink">Merchant administration</h2><p className="mt-1 text-sm text-muted">Manage users and merchant-specific configuration using the existing merchant APIs.</p><div className="mt-5 grid gap-3 sm:grid-cols-3"><Link href={`/merchants/${merchant.id}`} className="rounded-xl border border-border p-4 text-sm font-semibold hover:bg-slate-50">Open merchant workspace</Link><Link href={`/admin/merchant-users?merchantId=${merchant.id}`} className="rounded-xl border border-border p-4 text-sm font-semibold hover:bg-slate-50">View merchant users</Link><Link href={`/merchants/${merchant.id}`} className="rounded-xl border border-border p-4 text-sm font-semibold hover:bg-slate-50">Settings & integrations</Link></div></section>
+    <Card title="Merchant details"><Descriptions bordered column={{ xs: 1, sm: 2, lg: 4 }} items={[{ label: "Contact", children: merchant.name }, { label: "Email", children: merchant.email }, { label: "Phone", children: merchant.phone }, { label: "Created", children: new Date(merchant.createdAt).toLocaleDateString() }]} /></Card>
+    <Card title="Merchant administration"><Typography.Paragraph type="secondary">Manage users and merchant-specific configuration using the existing merchant APIs.</Typography.Paragraph><Space wrap><Link href={`/merchants/${merchant.id}`}><Button>Open merchant workspace</Button></Link><Link href={`/admin/merchant-users?merchantId=${merchant.id}`}><Button>View merchant users</Button></Link><Link href={`/merchants/${merchant.id}`}><Button>Settings & integrations</Button></Link></Space></Card>
   </div>;
 }
-
-function Info({ label, value }: { label: string; value: string }) { return <div className="rounded-2xl border border-border bg-white p-5 shadow-sm"><p className="text-xs font-medium uppercase tracking-wide text-muted">{label}</p><p className="mt-2 truncate text-sm font-semibold text-ink">{value}</p></div>; }
-function StatusBadge({ status }: { status: MerchantStatus }) { const classes: Record<MerchantStatus, string> = { PENDING: "bg-amber-50 text-amber-700", ACTIVE: "bg-emerald-50 text-emerald-700", SUSPENDED: "bg-orange-50 text-orange-700", INACTIVE: "bg-gray-100 text-gray-600", REJECTED: "bg-red-50 text-red-700" }; return <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${classes[status]}`}>{status}</span>; }
