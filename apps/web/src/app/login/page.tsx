@@ -63,18 +63,17 @@ export default function LoginPage() {
     event.preventDefault();
     setSubmitting(true);
 
-    const authenticated = await safeApiRequest(async () => {
+    const route = await safeApiRequest(async () => {
       await login(email, password);
-      const route = await getAuthenticatedRoute({ role: "SUPER_ADMIN" } && undefined);
-      return route;
+      return getAuthenticatedRoute();
     });
 
-    if (!authenticated) {
+    if (!route) {
       setSubmitting(false);
       return;
     }
 
-    router.replace(authenticated);
+    router.replace(route);
     setSubmitting(false);
   }
 
