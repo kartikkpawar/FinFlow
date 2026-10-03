@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/auth-context";
@@ -29,11 +29,50 @@ function EyeIcon({ visible }: { visible: boolean }) {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, logout, token, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (!token) {
+      setCheckingSession(false);
+      return;
+    }
+
+    let active = true;
+
+    async function redirectAuthenticatedUser() {
+      try {
+        const merchants = await apiFetch<MerchantList>("/merchants?limit=100");
+
+        if (!active) return;
+
+        if (merchants.items.length === 0) {
+          router.replace("/onboarding");
+        } else if (merchants.items.length === 1) {
+          router.replace("/dashboard");
+        } else {
+          router.replace("/merchants");
+        }
+      } catch {
+        if (active && !localStorage.getItem("finflow_access_token")) {
+          logout();
+          setCheckingSession(false);
+        }
+      }
+    }
+
+    redirectAuthenticatedUser();
+
+    return () => {
+      active = false;
+    };
+  }, [authLoading, logout, router, token]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -52,6 +91,10 @@ export default function LoginPage() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (authLoading || (token && checkingSession)) {
+    return <div className="flex min-h-screen items-center justify-center bg-slate-950 text-sm text-white">Checking your FinFlow session...</div>;
   }
 
   return (
