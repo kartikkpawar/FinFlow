@@ -7,6 +7,8 @@ export class MockPaymentProvider implements PaymentProvider {
 
   async createPayment(input: { paymentId: number; amount: number; currency: string; attemptNumber: number }): Promise<PaymentProviderResult> {
     switch (MOCK_PAYMENT_SCENARIO) {
+      case "PENDING":
+        return { status: "PENDING", response: { scenario: MOCK_PAYMENT_SCENARIO } };
       case "INSUFFICIENT_FUNDS":
         return { status: "FAILED", failureCode: "INSUFFICIENT_FUNDS", failureMessage: "Insufficient funds", response: { scenario: MOCK_PAYMENT_SCENARIO } };
       case "CARD_DECLINED":

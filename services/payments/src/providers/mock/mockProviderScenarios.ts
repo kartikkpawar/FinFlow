@@ -1,5 +1,6 @@
 export type MockPaymentScenario =
   | "SUCCESS"
+  | "PENDING"
   | "INSUFFICIENT_FUNDS"
   | "CARD_DECLINED"
   | "INVALID_PAYMENT_METHOD"

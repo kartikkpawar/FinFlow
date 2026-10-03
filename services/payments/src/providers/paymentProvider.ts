@@ -1,5 +1,5 @@
 export type PaymentProviderResult = {
-  status: "SUCCEEDED" | "FAILED" | "PROCESSING";
+  status: "PENDING" | "SUCCEEDED" | "FAILED" | "PROCESSING";
   providerPaymentId?: string;
   failureCode?: string;
   failureMessage?: string;
