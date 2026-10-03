@@ -106,3 +106,17 @@ export async function apiFetch<T>(
 
   return response.data.data;
 }
+
+export async function safeApiRequest<T>(
+  request: () => Promise<T>,
+): Promise<T | undefined> {
+  try {
+    return await request();
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      return undefined;
+    }
+
+    throw error;
+  }
+}
