@@ -13,6 +13,7 @@ import {
 
 export const merchantStatusEnum = pgEnum("merchant_status", ["PENDING", "ACTIVE", "SUSPENDED", "INACTIVE", "REJECTED"]);
 export const merchantRoleEnum = pgEnum("merchant_role", ["MERCHANT_ADMIN", "MERCHANT_USER"]);
+export const merchantUserStatusEnum = pgEnum("merchant_user_status", ["ACTIVE", "INACTIVE"]);
 export const invitationStatusEnum = pgEnum("merchant_invitation_status", ["PENDING", "ACCEPTED", "EXPIRED", "REVOKED"]);
 export const webhookDeliveryStatusEnum = pgEnum("merchant_webhook_delivery_status", ["PENDING", "DELIVERED", "FAILED"]);
 
@@ -32,6 +33,7 @@ export const merchantUsersTable = pgTable("merchant_users", {
   merchantId: integer("merchant_id").notNull().references(() => merchantsTable.id, { onDelete: "cascade" }),
   userId: integer("user_id").notNull(),
   role: merchantRoleEnum("role").default("MERCHANT_USER").notNull(),
+  status: merchantUserStatusEnum("status").default("ACTIVE").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   modifiedAt: timestamp("modified_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({

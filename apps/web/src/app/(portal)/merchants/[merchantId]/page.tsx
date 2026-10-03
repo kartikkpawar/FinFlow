@@ -6,7 +6,8 @@ import { useState } from "react";
 import { Alert, Button, Card, Descriptions, Form, Input, Select, Space, Switch, Table, Tabs, Tag, Typography } from "antd";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMerchant } from "@/features/merchants/api";
-import { merchantManagementApi, useMerchantApiKeys, useMerchantAudit, useMerchantInvitations, useMerchantSettings, useMerchantUsers, useMerchantWebhooks, type MerchantRole } from "@/features/merchants/management";
+import { MerchantUsersPanel } from "@/features/merchants/merchant-users-panel";
+import { merchantManagementApi, useMerchantApiKeys, useMerchantAudit, useMerchantInvitations, useMerchantSettings, useMerchantWebhooks, type MerchantRole } from "@/features/merchants/management";
 
 const roleOptions = ["MERCHANT_USER", "MERCHANT_ADMIN"].map((value) => ({ value, label: value }));
 const statusColors: Record<string, string> = { PENDING: "gold", ACTIVE: "green", SUSPENDED: "orange", INACTIVE: "default", REJECTED: "red" };
@@ -23,7 +24,7 @@ export default function MerchantDetailPage() {
   const merchant = merchantQuery.data;
   const items = [
     { key: "Overview", label: "Overview", children: <Overview merchant={merchant} /> },
-    { key: "Users", label: "Users", children: <Users merchantId={id} /> },
+    { key: "Users", label: "Users", children: <MerchantUsersPanel merchantId={id} /> },
     { key: "Settings", label: "Settings", children: <Settings merchantId={id} /> },
     { key: "Invitations", label: "Invitations", children: <Invitations merchantId={id} /> },
     { key: "API Keys", label: "API Keys", children: <ApiKeys merchantId={id} /> },
