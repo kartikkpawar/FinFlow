@@ -31,6 +31,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     return <div className="flex min-h-screen items-center justify-center bg-slate-50 text-sm text-muted">Checking administrator access...</div>;
   }
 
+  const displayName = user.name?.trim() || user.email;
+
   return (
     <div className="min-h-screen bg-slate-50 text-ink">
       <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-border bg-white lg:flex lg:flex-col">
@@ -45,7 +47,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
         <div className="border-t border-border p-4">
-          <p className="truncate px-3 text-xs text-muted">{user.email}</p>
+          <p className="truncate px-3 text-sm font-semibold text-ink">{displayName}</p>
+          <p className="truncate px-3 pt-0.5 text-xs text-muted">{user.email}</p>
           <button onClick={() => { logout(); router.replace("/login"); }} className="mt-2 w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-muted hover:bg-slate-50 hover:text-ink">Log out</button>
         </div>
       </aside>
