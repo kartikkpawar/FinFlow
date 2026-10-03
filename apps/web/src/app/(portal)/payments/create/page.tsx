@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  Alert,
   Button,
   Card,
   Form,
@@ -12,12 +13,13 @@ import {
   Typography,
 } from "antd";
 import { toast } from "react-toastify";
-import { useCreatePayment } from "@/features/payments/hooks";
+import { useCreatePayment, hasActiveMerchant } from "@/features/payments/hooks";
 
 export default function CreatePaymentPage() {
   const router = useRouter();
   const mutation = useCreatePayment();
   const [metadata, setMetadata] = useState("{}");
+  const [merchantMissing, setMerchantMissing] = useState(false);
 
   async function submit(values: {
     amount: number;
@@ -26,6 +28,14 @@ export default function CreatePaymentPage() {
     description?: string;
     customerId?: string;
   }) {
+    if (!hasActiveMerchant()) {
+      setMerchantMissing(true);
+      toast.error("Select a merchant before creating a payment");
+      return;
+    }
+
+    setMerchantMissing(false);
+
     let parsedMetadata: Record<string, unknown> = {};
     try {
       parsedMetadata = metadata.trim() ? JSON.parse(metadata) : {};
@@ -49,8 +59,10 @@ export default function CreatePaymentPage() {
       });
       toast.success("Payment created");
       router.push(`/payments/${payment.id}`);
-    } catch {
-      /* API interceptor displays the error */
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to create payment";
+      toast.error(message);
     }
   }
 
@@ -67,6 +79,14 @@ export default function CreatePaymentPage() {
           Create a payment in minor currency units. For INR, ₹100 = 10000.
         </Typography.Paragraph>
       </div>
+      {merchantMissing && (
+        <Alert
+          type="warning"
+          showIcon
+          message="No merchant selected"
+          description="Open a merchant first, then return to Create payment. The selected merchant is used for the payment request."
+        />
+      )}
       <Card bordered={false} className="!rounded-2xl !shadow-sm">
         <Form
           layout="vertical"
