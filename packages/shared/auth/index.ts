@@ -61,7 +61,10 @@ export function verifyToken(token: string): UserPayload {
   try {
     const decodedToken = jwt.verify(token, getJWTSecret());
     if (typeof decodedToken !== "object" || decodedToken === null) {
-      throw new Error("Invalid Token Payload");
+      throw new AppError(
+        STATUS_CODES.UNAUTHORIZED,
+        responseMessage.AUTH.INVALID_TOKEN,
+      );
     }
 
     return {
@@ -71,11 +74,17 @@ export function verifyToken(token: string): UserPayload {
     };
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
-      throw new Error("Token expired");
+      throw new AppError(
+        STATUS_CODES.UNAUTHORIZED,
+        responseMessage.AUTH.TOKEN_EXPIRED,
+      );
     }
 
     if (error instanceof jwt.JsonWebTokenError) {
-      throw new Error("Invalid token");
+      throw new AppError(
+        STATUS_CODES.UNAUTHORIZED,
+        responseMessage.AUTH.INVALID_TOKEN,
+      );
     }
 
     throw error;
