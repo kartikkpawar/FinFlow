@@ -269,6 +269,29 @@ export async function updateMerchantStatus(
   return merchant;
 }
 
+export async function resolveMerchantMembership(userId: number, merchantId: number) {
+  const [membership] = await db
+    .select({
+      merchantId: merchantUsersTable.merchantId,
+      role: merchantUsersTable.role,
+    })
+    .from(merchantUsersTable)
+    .where(
+      and(
+        eq(merchantUsersTable.userId, userId),
+        eq(merchantUsersTable.merchantId, merchantId),
+        eq(merchantUsersTable.status, "ACTIVE"),
+      ),
+    )
+    .limit(1);
+
+  if (!membership) {
+    throw new AppError(STATUS_CODES.FORBIDDEN, "Merchant access denied");
+  }
+
+  return membership;
+}
+
 export function getIdentity(
   req: Parameters<typeof getIdentityHeaders>[0],
 ): Identity {
