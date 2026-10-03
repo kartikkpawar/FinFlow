@@ -24,6 +24,8 @@ const PORT = process.env.API_GATEWAY_PORT || 3001;
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || "http://localhost:3002";
 const MERCHANTS_SERVICE_URL =
   process.env.MERCHANTS_SERVICE_URL || "http://localhost:3003";
+const PAYMENTS_SERVICE_URL =
+  process.env.PAYMENTS_SERVICE_URL || "http://localhost:3005";
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3004";
 
 function normalizeOrigin(origin: string) {
@@ -136,8 +138,31 @@ const merchantProxy = createProxyMiddleware({
   },
 });
 
+const paymentProxy = createProxyMiddleware({
+  target: PAYMENTS_SERVICE_URL,
+  changeOrigin: true,
+  pathRewrite: (path) => `/payments${path}`,
+  on: {
+    error: (_error, _req, res) => {
+      if (!("writeHead" in res)) return;
+
+      const response = res as ServerResponse;
+      if (response.headersSent) return;
+
+      response.writeHead(502, { "Content-Type": "application/json" });
+      response.end(
+        JSON.stringify({
+          success: false,
+          message: "Payment service is unavailable",
+        }),
+      );
+    },
+  },
+});
+
 app.use("/merchant-users", secureSession, merchantProxy);
 app.use("/merchants", secureSession, merchantProxy);
+app.use("/payments", secureSession, paymentProxy);
 
 app.use((_req, _res, next) => {
   next(new AppError(400, "Route Not Found"));
