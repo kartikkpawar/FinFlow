@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert, Button, Card, Descriptions, Form, Input, Select, Space, Switch, Table, Tabs, Tag, Typography } from "antd";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMerchant } from "@/features/merchants/api";
@@ -19,6 +19,13 @@ export default function MerchantDetailPage() {
   const id = Number(params.merchantId);
   const merchantQuery = useMerchant(params.merchantId);
   const [tab, setTab] = useState("Overview");
+
+  useEffect(() => {
+    if (Number.isSafeInteger(id) && id > 0) {
+      window.localStorage.setItem("finflow_merchant_id", String(id));
+    }
+  }, [id]);
+
   if (merchantQuery.isLoading) return <Card loading />;
   if (merchantQuery.isError || !merchantQuery.data) return <Card><Typography.Text type="danger">Unable to load this merchant.</Typography.Text></Card>;
   const merchant = merchantQuery.data;

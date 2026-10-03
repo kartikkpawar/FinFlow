@@ -18,15 +18,23 @@ export const paymentKeys = {
   refunds: (id: number) => ["payments", "refunds", id] as const,
 };
 
+export function hasActiveMerchant() {
+  return typeof window !== "undefined" && Boolean(window.localStorage.getItem("finflow_merchant_id"));
+}
+
 export function usePayments(filters: PaymentFilters = {}) {
-  return useQuery({ queryKey: paymentKeys.list(filters), queryFn: () => listPayments(filters) });
+  return useQuery({
+    queryKey: paymentKeys.list(filters),
+    queryFn: () => listPayments(filters),
+    enabled: hasActiveMerchant(),
+  });
 }
 
 export function usePayment(paymentId: number) {
   return useQuery({
     queryKey: paymentKeys.detail(paymentId),
     queryFn: () => getPayment(paymentId),
-    enabled: Number.isInteger(paymentId) && paymentId > 0,
+    enabled: Number.isInteger(paymentId) && paymentId > 0 && hasActiveMerchant(),
   });
 }
 
@@ -53,7 +61,7 @@ export function usePaymentRefunds(paymentId: number) {
   return useQuery({
     queryKey: paymentKeys.refunds(paymentId),
     queryFn: () => listPaymentRefunds(paymentId),
-    enabled: Number.isInteger(paymentId) && paymentId > 0,
+    enabled: Number.isInteger(paymentId) && paymentId > 0 && hasActiveMerchant(),
   });
 }
 
