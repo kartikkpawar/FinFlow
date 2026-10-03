@@ -38,8 +38,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     router.push(key);
   }
 
-  function handleLogout() {
-    logout();
+  async function handleLogout() {
+    await logout();
     router.replace("/login");
   }
 

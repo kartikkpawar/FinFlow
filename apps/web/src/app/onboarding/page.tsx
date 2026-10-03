@@ -32,7 +32,7 @@ export default function OnboardingPage() {
     catch (error) { setJoinError(error instanceof Error ? error.message : "We couldn't accept this invitation. Please check the invitation token and try again."); }
     finally { setJoining(false); }
   }
-  function handleLogout() { logout(); router.replace("/login"); }
+  async function handleLogout() { await logout(); router.replace("/login"); }
 
   return <main className="min-h-screen overflow-hidden bg-surface"><div className="mx-auto flex min-h-screen max-w-6xl flex-col px-5 py-8 sm:px-8 lg:px-12">
     <header className="flex items-center justify-between"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand text-sm font-bold text-white">F</div><span className="text-lg font-bold text-ink">FinFlow</span></div><Space><Typography.Text type="secondary" className="hidden sm:inline">Account setup</Typography.Text><Button onClick={handleLogout}>Logout</Button></Space></header>
