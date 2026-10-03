@@ -1,8 +1,10 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/features/auth/auth-context";
+import { getAuthenticatedRoute } from "@/features/auth/auth-routing";
 import { apiFetch } from "@/lib/api";
 
 type RegisterResponse = {
@@ -11,9 +13,37 @@ type RegisterResponse = {
 
 export default function SignupPage() {
   const router = useRouter();
+  const { token, loading: authLoading } = useAuth();
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirmPassword: "" });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (!token) {
+      setCheckingSession(false);
+      return;
+    }
+
+    let active = true;
+
+    async function redirectAuthenticatedUser() {
+      try {
+        const route = await getAuthenticatedRoute();
+        if (active) router.replace(route);
+      } catch {
+        if (active) setCheckingSession(false);
+      }
+    }
+
+    redirectAuthenticatedUser();
+
+    return () => {
+      active = false;
+    };
+  }, [authLoading, router, token]);
 
   function update(field: keyof typeof form, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -48,6 +78,10 @@ export default function SignupPage() {
     }
   }
 
+  if (authLoading || (token && checkingSession)) {
+    return <div className="flex min-h-screen items-center justify-center bg-slate-950 text-sm text-white">Checking your FinFlow session...</div>;
+  }
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-8">
       <div className="grid w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl lg:grid-cols-2">
@@ -73,11 +107,11 @@ export default function SignupPage() {
               </label>
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-gray-700">Email</span>
-                <input required type="email" value={form.email} onChange={(event) => update("email", event.target.value)} autoComplete="email" className="w-full rounded-lg border border-border px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-blue-100" />
+                <input required type="email" inputMode="email" value={form.email} onChange={(event) => update("email", event.target.value)} autoComplete="email" className="w-full rounded-lg border border-border px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-blue-100" />
               </label>
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-gray-700">Phone</span>
-                <input required value={form.phone} onChange={(event) => update("phone", event.target.value)} placeholder="+91 98765 43210" autoComplete="tel" className="w-full rounded-lg border border-border px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-blue-100" />
+                <input required type="tel" inputMode="tel" value={form.phone} onChange={(event) => update("phone", event.target.value)} placeholder="+91 98765 43210" autoComplete="tel" className="w-full rounded-lg border border-border px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-blue-100" />
               </label>
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block">
