@@ -32,6 +32,60 @@ function getApiGatewaySecret(): string {
   return gatewaySecret;
 }
 
+async function resolveMerchantRole(
+  userId: number,
+  merchantId: number,
+  gatewaySecret: string,
+) {
+  const merchantsServiceUrl =
+    process.env.MERCHANTS_SERVICE_URL || "http://localhost:3003";
+  let response: globalThis.Response;
+
+  try {
+    response = await fetch(
+      `${merchantsServiceUrl}/merchant-users/context?merchantId=${merchantId}`,
+      {
+        headers: {
+          "x-user-id": String(userId),
+          "x-gateway-secret": gatewaySecret,
+        },
+      },
+    );
+  } catch {
+    throw new AppError(502, "Merchant service is unavailable");
+  }
+
+  if (!response.ok) {
+    if (response.status === STATUS_CODES.FORBIDDEN) {
+      throw new AppError(STATUS_CODES.FORBIDDEN, "Merchant access denied");
+    }
+    throw new AppError(502, "Unable to resolve merchant access");
+  }
+
+  const body = (await response.json()) as {
+    success?: boolean;
+    data?: { merchantId?: number; role?: UserPayload["role"] };
+  };
+
+  if (!body.success || body.data?.merchantId !== merchantId || !body.data.role) {
+    throw new AppError(502, "Invalid merchant membership response");
+  }
+
+  return body.data.role;
+}
+
+function getMerchantId(req: Request) {
+  const rawMerchantId = req.headers["x-merchant-id"];
+  if (Array.isArray(rawMerchantId)) return undefined;
+  if (typeof rawMerchantId !== "string" || !rawMerchantId.trim()) return undefined;
+
+  const merchantId = Number(rawMerchantId);
+  if (!Number.isInteger(merchantId) || merchantId <= 0) {
+    throw new AppError(STATUS_CODES.BAD_REQUEST, "Invalid merchant context");
+  }
+  return merchantId;
+}
+
 function addIdentityHeaders(
   req: Request,
   payload: UserPayload & { gatewaySecret: string },
@@ -56,6 +110,22 @@ export const secureSession = asyncHandler(async (req, res, next) => {
   const token = authHeader.split(" ")[1];
   const jwtUser = verifyToken(token);
   const gatewaySecret = getApiGatewaySecret();
-  addIdentityHeaders(req, { ...jwtUser, gatewaySecret });
+  const merchantId = getMerchantId(req);
+
+  if (merchantId !== undefined) {
+    const role = await resolveMerchantRole(
+      jwtUser.userId,
+      merchantId,
+      gatewaySecret,
+    );
+    addIdentityHeaders(req, {
+      ...jwtUser,
+      role,
+      gatewaySecret,
+    });
+  } else {
+    addIdentityHeaders(req, { ...jwtUser, gatewaySecret });
+  }
+
   next();
 });
