@@ -33,6 +33,24 @@ services:
       timeout: 5s
       retries: 5
 
+  postgres-payments:
+    image: postgres:17
+    container_name: finflow-postgres-payments
+    environment:
+      POSTGRES_USER: finflow
+      POSTGRES_PASSWORD: finflow
+      POSTGRES_DB: finflow_payments
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_payments_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U finflow -d finflow_payments"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 volumes:
   postgres_auth_data:
   postgres_merchants_data:
+  postgres_payments_data:
