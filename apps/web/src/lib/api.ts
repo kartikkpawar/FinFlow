@@ -1,5 +1,5 @@
 import axios, { AxiosError, type AxiosRequestConfig } from "axios";
-import { showToast } from "@/components/toast";
+import { toast } from "react-toastify";
 
 type ApiErrorResponse = {
   success?: boolean;
@@ -90,7 +90,7 @@ api.interceptors.response.use(
       }
     }
 
-    showToast(getApiErrorMessage(error), "error");
+    toast.error(getApiErrorMessage(error));
     return Promise.reject(error);
   },
 );
