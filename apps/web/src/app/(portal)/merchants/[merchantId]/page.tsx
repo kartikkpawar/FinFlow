@@ -38,6 +38,16 @@ function Overview({ merchant }: { merchant: MerchantDetail }) {
   return <div className="grid gap-6 md:grid-cols-2"><Card title="Contact"><Descriptions column={1} items={[{ label: "Email", children: merchant.email }, { label: "Phone", children: merchant.phone }]} /></Card><Card title="Account"><Descriptions column={1} items={[{ label: "Status", children: <Tag color={statusColors[merchant.status]}>{merchant.status}</Tag> }, { label: "Created", children: new Date(merchant.createdAt).toLocaleString() }, { label: "Modified", children: new Date(merchant.modifiedAt).toLocaleString() }]} /></Card></div>;
 }
 
+function Users({ merchantId }: { merchantId: number }) {
+  const query = useMerchantUsers(merchantId);
+  const [form] = Form.useForm<{ userId: string; role: MerchantRole }>();
+  const add = useMutation({ mutationFn: (values: { userId: string; role: MerchantRole }) => merchantManagementApi.addUser(merchantId, { userId: Number(values.userId), role: values.role }), onSuccess: () => { form.resetFields(); void query.refetch(); } });
+  const update = useMutation({ mutationFn: ({ userId, role }: { userId: number; role: MerchantRole }) => merchantManagementApi.updateUser(merchantId, userId, { role }), onSuccess: () => query.refetch() });
+  const remove = useMutation({ mutationFn: (userId: number) => merchantManagementApi.removeUser(merchantId, userId), onSuccess: () => query.refetch() });
+  const columns = [{ title: "User ID", dataIndex: "userId" }, { title: "Role", dataIndex: "role", render: (role: MerchantRole, row: { userId: number }) => <Select size="small" value={role} options={roleOptions} onChange={(value) => update.mutate({ userId: row.userId, role: value })} />, }, { title: "Created", dataIndex: "createdAt", render: (value: string) => new Date(value).toLocaleDateString() }, { title: "", key: "remove", align: "right" as const, render: (_: unknown, row: { userId: number }) => <Button danger type="link" onClick={() => remove.mutate(row.userId)}>Remove</Button> }];
+  return <Card title="Merchant users"><Form form={form} layout="inline" onFinish={(values) => add.mutate(values)} className="mb-5"><Form.Item name="userId" rules={[{ required: true, message: "Please enter the user ID." }, { pattern: /^\d+$/, message: "User ID must contain numbers only." }]}><Input placeholder="Auth user ID" /></Form.Item><Form.Item name="role" initialValue="MERCHANT_USER" rules={[{ required: true, message: "Please select a merchant role." }]}><Select options={roleOptions} className="w-44" /></Form.Item><Form.Item><Button type="primary" htmlType="submit" loading={add.isPending}>Add user</Button></Form.Item></Form><Table rowKey="id" loading={query.isLoading} dataSource={query.data ?? []} columns={columns} scroll={{ x: 650 }} /></Card>;
+}
+
 function Settings({ merchantId }: { merchantId: number }) {
   const query = useMerchantSettings(merchantId);
   const client = useQueryClient();

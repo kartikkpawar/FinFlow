@@ -287,6 +287,43 @@ state.
 Follow existing Docker/Compose conventions and never bake secrets into images.
 Do not introduce a second infrastructure strategy without a concrete reason.
 
+## API collection and flow maintenance
+
+Maintain the Postman collection at:
+
+`finflow_postman_collection.json`
+
+The collection is the canonical manual API test artifact for FinFlow. It must
+contain both:
+
+1. service-wise API folders for every currently exposed API route
+2. end-to-end test flows for important business journeys
+
+Whenever a new API route is added, removed, or its method/path/request contract
+changes:
+
+- inspect the route and validation/schema before editing the collection
+- update the matching service folder in `finflow_postman_collection.json`
+- add/update any affected end-to-end flow
+- keep collection variables reusable (`baseUrl`, `accessToken`, resource IDs,
+  tokens, etc.)
+- add request examples that match the actual runtime validation
+
+Whenever a new business flow is introduced or an existing flow changes:
+
+- add/update the corresponding flow folder
+- order requests according to the real dependency sequence
+- capture IDs/tokens from previous responses with Postman test scripts when
+  required for subsequent requests
+- do not document routes that do not exist in the repository
+
+Before opening a PR for API changes, compare the collection against the current
+route definitions in every affected service and ensure no newly added route or
+flow is missing.
+
+The filename must remain exactly `finflow_postman_collection.json`.
+Do not create alternate Postman collection filenames.
+
 ## Git hygiene
 
 Keep changes focused and reviewable. Never commit secrets, `.env` files,
@@ -328,6 +365,8 @@ dependency is merged, unless the user explicitly requests stacked PRs.
 - important behavior is tested
 - typecheck/lint/tests/build are run as relevant
 - no unrelated code changed
+- API collection is updated for API/flow changes
+- no alternate Postman collection filename is introduced
 - final report is accurate
 
 ## Final response

@@ -7,6 +7,7 @@ import {
   successResponse,
   verifyGatewaySecret,
 } from "@finflow/shared";
+import cookieParser from "cookie-parser";
 
 import express from "express";
 import authRoutes from "./routes/auth.routes";
@@ -21,6 +22,7 @@ const PORT = process.env.AUTH_SERVICE_PORT || 3002;
 const app = express();
 
 app.use(httpLogger);
+app.use(cookieParser());
 app.use(express.json());
 
 app.get("/health", (req, res) => {

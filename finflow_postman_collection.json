@@ -1,0 +1,142 @@
+{
+  "info": {
+    "name": "FinFlow API Collection",
+    "description": "Canonical FinFlow API collection. Service-wise route inventory plus end-to-end flows. Keep this file synchronized with route definitions and business flows.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key":"baseUrl","value":"http://localhost:3001"},
+    {"key":"accessToken","value":""},
+    {"key":"loginEmail","value":""},
+    {"key":"loginPassword","value":"Password@123"},
+    {"key":"emailVerifyToken","value":""},
+    {"key":"passwordResetToken","value":""},
+    {"key":"invitationToken","value":""},
+    {"key":"merchantId","value":"1"},
+    {"key":"userId","value":"1"},
+    {"key":"keyId","value":"1"},
+    {"key":"webhookId","value":"1"},
+    {"key":"invitationId","value":"1"},
+    {"key":"paymentId","value":"1"},
+    {"key":"refundId","value":"1"},
+    {"key":"idempotencyKey","value":"postman-{{$timestamp}}"}
+  ],
+  "item": [
+    {"name":"🧪 TEST FLOWS","item":[
+      {"name":"FLOW 1 - New User Onboarding","item":[
+        {"name":"Register","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"name\":\"FinFlow Test User\",\"email\":\"finflow.test.{{$timestamp}}@example.com\",\"phone\":\"+919876543210\",\"password\":\"Password@123\"}"},"url":"{{baseUrl}}/auth/register"}},
+        {"name":"Verify Email","request":{"method":"GET","url":"{{baseUrl}}/auth/verify-email?token={{emailVerifyToken}}"}},
+        {"name":"Login","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"email\":\"{{loginEmail}}\",\"password\":\"{{loginPassword}}\"}"},"url":"{{baseUrl}}/auth/login"}},
+        {"name":"Create Merchant","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"body":{"mode":"raw","raw":"{\"name\":\"FinFlow Test Merchant\",\"businessName\":\"FinFlow Technologies\",\"email\":\"merchant{{$timestamp}}@example.com\",\"phone\":\"+919876543211\"}"},"url":"{{baseUrl}}/merchants"}}
+      ]},
+      {"name":"FLOW 2 - Login Refresh Logout","item":[
+        {"name":"Login","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"email\":\"{{loginEmail}}\",\"password\":\"{{loginPassword}}\"}"},"url":"{{baseUrl}}/auth/login"}},
+        {"name":"Refresh Access Token","request":{"method":"POST","url":"{{baseUrl}}/auth/refresh-access-token"}},
+        {"name":"Logout","request":{"method":"POST","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"url":"{{baseUrl}}/auth/logout"}}
+      ]},
+      {"name":"FLOW 3 - Merchant Lifecycle","item":[
+        {"name":"Create Merchant","request":{"method":"POST","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"body":{"mode":"raw","raw":"{\"name\":\"FinFlow Test Merchant\",\"businessName\":\"FinFlow Technologies\",\"email\":\"merchant{{$timestamp}}@example.com\",\"phone\":\"+919876543211\"}"},"url":"{{baseUrl}}/merchants"}},
+        {"name":"List Merchants","request":{"method":"GET","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"url":"{{baseUrl}}/merchants?page=1&limit=20"}},
+        {"name":"Get Merchant","request":{"method":"GET","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"url":"{{baseUrl}}/merchants/{{merchantId}}"}},
+        {"name":"Update Merchant","request":{"method":"PATCH","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"body":{"mode":"raw","raw":"{\"name\":\"FinFlow Test Merchant Updated\"}"},"url":"{{baseUrl}}/merchants/{{merchantId}}"}},
+        {"name":"Activate Merchant","request":{"method":"PATCH","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"body":{"mode":"raw","raw":"{\"status\":\"ACTIVE\"}"},"url":"{{baseUrl}}/merchants/{{merchantId}}/status"}}
+      ]},
+      {"name":"FLOW 4 - Merchant Users","item":[
+        {"name":"List Users","request":{"method":"GET","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"url":"{{baseUrl}}/merchants/{{merchantId}}/users"}},
+        {"name":"Add User","request":{"method":"POST","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"body":{"mode":"raw","raw":"{\"userId\":{{userId}},\"role\":\"MERCHANT_USER\"}"},"url":"{{baseUrl}}/merchants/{{merchantId}}/users"}},
+        {"name":"Get User","request":{"method":"GET","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"url":"{{baseUrl}}/merchants/{{merchantId}}/users/{{userId}}"}},
+        {"name":"Update User Role","request":{"method":"PATCH","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"body":{"mode":"raw","raw":"{\"role\":\"MERCHANT_ADMIN\"}"},"url":"{{baseUrl}}/merchants/{{merchantId}}/users/{{userId}}"}},
+        {"name":"Delete User","request":{"method":"DELETE","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"url":"{{baseUrl}}/merchants/{{merchantId}}/users/{{userId}}"}}
+      ]},
+      {"name":"FLOW 5 - Merchant Configuration","item":[
+        {"name":"Get Settings","request":{"method":"GET","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"url":"{{baseUrl}}/merchants/{{merchantId}}/settings"}},
+        {"name":"Update Settings","request":{"method":"PATCH","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"body":{"mode":"raw","raw":"{\"timezone\":\"Asia/Kolkata\",\"currency\":\"INR\",\"notificationsEnabled\":true,\"metadata\":{\"environment\":\"testing\"}}"},"url":"{{baseUrl}}/merchants/{{merchantId}}/settings"}}
+      ]},
+      {"name":"FLOW 6 - Invitation","item":[
+        {"name":"Create Invitation","request":{"method":"POST","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"body":{"mode":"raw","raw":"{\"email\":\"invited.user@example.com\",\"role\":\"MERCHANT_USER\"}"},"url":"{{baseUrl}}/merchants/{{merchantId}}/invitations"}},
+        {"name":"List Invitations","request":{"method":"GET","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"url":"{{baseUrl}}/merchants/{{merchantId}}/invitations"}},
+        {"name":"Accept Invitation","request":{"method":"POST","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"body":{"mode":"raw","raw":"{\"token\":\"{{invitationToken}}\"}"},"url":"{{baseUrl}}/merchants/invitations/accept"}},
+        {"name":"Delete Invitation","request":{"method":"DELETE","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"url":"{{baseUrl}}/merchants/{{merchantId}}/invitations/{{invitationId}}"}}
+      ]},
+      {"name":"FLOW 7 - API Key Lifecycle","item":[
+        {"name":"Create API Key","request":{"method":"POST","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"body":{"mode":"raw","raw":"{\"name\":\"Postman Test Key\",\"expiresAt\":\"2030-12-31T23:59:59.000Z\"}"},"url":"{{baseUrl}}/merchants/{{merchantId}}/api-keys"}},
+        {"name":"List API Keys","request":{"method":"GET","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"url":"{{baseUrl}}/merchants/{{merchantId}}/api-keys"}},
+        {"name":"Delete API Key","request":{"method":"DELETE","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"url":"{{baseUrl}}/merchants/{{merchantId}}/api-keys/{{keyId}}"}}
+      ]},
+      {"name":"FLOW 8 - Webhook Lifecycle","item":[
+        {"name":"Create Webhook","request":{"method":"POST","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"body":{"mode":"raw","raw":"{\"url\":\"https://example.com/finflow/webhook\",\"events\":[\"payment.created\",\"payment.updated\"],\"enabled\":true}"},"url":"{{baseUrl}}/merchants/{{merchantId}}/webhooks"}},
+        {"name":"List Webhooks","request":{"method":"GET","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"url":"{{baseUrl}}/merchants/{{merchantId}}/webhooks"}},
+        {"name":"Update Webhook","request":{"method":"PATCH","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"body":{"mode":"raw","raw":"{\"events\":[\"payment.failed\",\"merchant.updated\"],\"enabled\":false}"},"url":"{{baseUrl}}/merchants/{{merchantId}}/webhooks/{{webhookId}}"}},
+        {"name":"Delete Webhook","request":{"method":"DELETE","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"url":"{{baseUrl}}/merchants/{{merchantId}}/webhooks/{{webhookId}}"}}
+      ]},
+      {"name":"FLOW 9 - Audit Trail","item":[{"name":"List Audit Logs","request":{"method":"GET","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"url":"{{baseUrl}}/merchants/{{merchantId}}/audit-logs"}}]},
+      {"name":"FLOW 10 - Password Recovery","item":[
+        {"name":"Generate Reset Token","request":{"method":"GET","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"url":"{{baseUrl}}/auth/forgot-password"}},
+        {"name":"Apply New Password","request":{"method":"PATCH","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"newPassword\":\"Password@789\"}"},"url":"{{baseUrl}}/auth/forgot-password?token={{passwordResetToken}}"}}
+      ]},
+      {"name":"FLOW 11 - Password Change","item":[{"name":"Reset Password","request":{"method":"PATCH","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"body":{"mode":"raw","raw":"{\"currentPassword\":\"Password@123\",\"newPassword\":\"Password@456\"}"},"url":"{{baseUrl}}/auth/reset-password"}}]},
+      {"name":"FLOW 12 - Logout All Sessions","item":[{"name":"Login","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"email\":\"{{loginEmail}}\",\"password\":\"{{loginPassword}}\"}"},"url":"{{baseUrl}}/auth/login"}},{"name":"Logout All","request":{"method":"POST","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"url":"{{baseUrl}}/auth/logout?type=all"}}]},
+      {"name":"FLOW 13 - Payment Lifecycle","item":[
+        {"name":"Create Payment","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"},{"key":"Idempotency-Key","value":"{{idempotencyKey}}"},{"key":"x-merchant-id","value":"{{merchantId}}"}],"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"body":{"mode":"raw","raw":"{\"reference\":\"ORDER-{{$timestamp}}\",\"amount\":10000,\"currency\":\"INR\",\"description\":\"Postman payment\",\"customerId\":\"customer-1\",\"metadata\":{\"source\":\"postman\"}}"},"url":"{{baseUrl}}/payments"}},
+        {"name":"List Payments","request":{"method":"GET","header":[{"key":"x-merchant-id","value":"{{merchantId}}"}],"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"url":"{{baseUrl}}/payments?page=1&limit=20"}},
+        {"name":"Get Payment","request":{"method":"GET","header":[{"key":"x-merchant-id","value":"{{merchantId}}"}],"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"url":"{{baseUrl}}/payments/{{paymentId}}"}},
+        {"name":"Cancel Payment","request":{"method":"POST","header":[{"key":"x-merchant-id","value":"{{merchantId}}"}],"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"url":"{{baseUrl}}/payments/{{paymentId}}/cancel"}},
+        {"name":"Create Refund","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"},{"key":"x-merchant-id","value":"{{merchantId}}"}],"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"body":{"mode":"raw","raw":"{\"amount\":10000,\"reason\":\"Customer request\",\"metadata\":{\"source\":\"postman\"}}"},"url":"{{baseUrl}}/payments/{{paymentId}}/refunds"}},
+        {"name":"List Payment Refunds","request":{"method":"GET","header":[{"key":"x-merchant-id","value":"{{merchantId}}"}],"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"url":"{{baseUrl}}/payments/{{paymentId}}/refunds"}},
+        {"name":"Get Refund","request":{"method":"GET","header":[{"key":"x-merchant-id","value":"{{merchantId}}"}],"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},"url":"{{baseUrl}}/refunds/{{refundId}}"}}
+      ]}
+    ]},
+    {"name":"0. Health","item":[
+      {"name":"API Gateway Health","request":{"method":"GET","url":"{{baseUrl}}/health"}},
+      {"name":"Auth Service Health","request":{"method":"GET","url":"http://localhost:3002/health"}},
+      {"name":"Merchants Service Health","request":{"method":"GET","url":"http://localhost:3003/health"}},
+      {"name":"Payments Service Health","request":{"method":"GET","url":"http://localhost:3005/health"}}
+    ]},
+    {"name":"1. Auth Service","item":[
+      {"name":"POST /auth/register","request":{"method":"POST","url":"{{baseUrl}}/auth/register"}},
+      {"name":"GET /auth/verify-email","request":{"method":"GET","url":"{{baseUrl}}/auth/verify-email?token={{emailVerifyToken}}"}},
+      {"name":"POST /auth/login","request":{"method":"POST","url":"{{baseUrl}}/auth/login"}},
+      {"name":"POST /auth/refresh-access-token","request":{"method":"POST","url":"{{baseUrl}}/auth/refresh-access-token"}},
+      {"name":"POST /auth/logout","request":{"method":"POST","url":"{{baseUrl}}/auth/logout"}},
+      {"name":"PATCH /auth/reset-password","request":{"method":"PATCH","url":"{{baseUrl}}/auth/reset-password"}},
+      {"name":"GET /auth/forgot-password","request":{"method":"GET","url":"{{baseUrl}}/auth/forgot-password"}},
+      {"name":"PATCH /auth/forgot-password","request":{"method":"PATCH","url":"{{baseUrl}}/auth/forgot-password?token={{passwordResetToken}}"}}
+    ]},
+    {"name":"2. Merchants Service","item":[
+      {"name":"POST /merchants","request":{"method":"POST","url":"{{baseUrl}}/merchants"}},
+      {"name":"GET /merchants","request":{"method":"GET","url":"{{baseUrl}}/merchants?page=1&limit=20"}},
+      {"name":"GET /merchants/:merchantId","request":{"method":"GET","url":"{{baseUrl}}/merchants/{{merchantId}}"}},
+      {"name":"PATCH /merchants/:merchantId","request":{"method":"PATCH","url":"{{baseUrl}}/merchants/{{merchantId}}"}},
+      {"name":"PATCH /merchants/:merchantId/status","request":{"method":"PATCH","url":"{{baseUrl}}/merchants/{{merchantId}}/status"}},
+      {"name":"GET /merchants/:merchantId/users","request":{"method":"GET","url":"{{baseUrl}}/merchants/{{merchantId}}/users"}},
+      {"name":"POST /merchants/:merchantId/users","request":{"method":"POST","url":"{{baseUrl}}/merchants/{{merchantId}}/users"}},
+      {"name":"GET /merchants/:merchantId/users/:userId","request":{"method":"GET","url":"{{baseUrl}}/merchants/{{merchantId}}/users/{{userId}}"}},
+      {"name":"PATCH /merchants/:merchantId/users/:userId","request":{"method":"PATCH","url":"{{baseUrl}}/merchants/{{merchantId}}/users/{{userId}}"}},
+      {"name":"DELETE /merchants/:merchantId/users/:userId","request":{"method":"DELETE","url":"{{baseUrl}}/merchants/{{merchantId}}/users/{{userId}}"}},
+      {"name":"GET /merchants/:merchantId/settings","request":{"method":"GET","url":"{{baseUrl}}/merchants/{{merchantId}}/settings"}},
+      {"name":"PATCH /merchants/:merchantId/settings","request":{"method":"PATCH","url":"{{baseUrl}}/merchants/{{merchantId}}/settings"}},
+      {"name":"POST /merchants/:merchantId/invitations","request":{"method":"POST","url":"{{baseUrl}}/merchants/{{merchantId}}/invitations"}},
+      {"name":"GET /merchants/:merchantId/invitations","request":{"method":"GET","url":"{{baseUrl}}/merchants/{{merchantId}}/invitations"}},
+      {"name":"DELETE /merchants/:merchantId/invitations/:invitationId","request":{"method":"DELETE","url":"{{baseUrl}}/merchants/{{merchantId}}/invitations/{{invitationId}}"}},
+      {"name":"POST /merchants/invitations/accept","request":{"method":"POST","url":"{{baseUrl}}/merchants/invitations/accept"}},
+      {"name":"POST /merchants/:merchantId/api-keys","request":{"method":"POST","url":"{{baseUrl}}/merchants/{{merchantId}}/api-keys"}},
+      {"name":"GET /merchants/:merchantId/api-keys","request":{"method":"GET","url":"{{baseUrl}}/merchants/{{merchantId}}/api-keys"}},
+      {"name":"DELETE /merchants/:merchantId/api-keys/:keyId","request":{"method":"DELETE","url":"{{baseUrl}}/merchants/{{merchantId}}/api-keys/{{keyId}}"}},
+      {"name":"POST /merchants/:merchantId/webhooks","request":{"method":"POST","url":"{{baseUrl}}/merchants/{{merchantId}}/webhooks"}},
+      {"name":"GET /merchants/:merchantId/webhooks","request":{"method":"GET","url":"{{baseUrl}}/merchants/{{merchantId}}/webhooks"}},
+      {"name":"PATCH /merchants/:merchantId/webhooks/:webhookId","request":{"method":"PATCH","url":"{{baseUrl}}/merchants/{{merchantId}}/webhooks/{{webhookId}}"}},
+      {"name":"DELETE /merchants/:merchantId/webhooks/:webhookId","request":{"method":"DELETE","url":"{{baseUrl}}/merchants/{{merchantId}}/webhooks/{{webhookId}}"}},
+      {"name":"GET /merchants/:merchantId/audit-logs","request":{"method":"GET","url":"{{baseUrl}}/merchants/{{merchantId}}/audit-logs"}}
+    ]},
+    {"name":"3. Merchant Platform Users","item":[{"name":"GET /merchant-users","request":{"method":"GET","url":"{{baseUrl}}/merchant-users?page=1&limit=20"}}]},
+    {"name":"4. Payments Service","item":[
+      {"name":"POST /payments","request":{"method":"POST","url":"{{baseUrl}}/payments"}},
+      {"name":"GET /payments","request":{"method":"GET","url":"{{baseUrl}}/payments?page=1&limit=20"}},
+      {"name":"GET /payments/:paymentId","request":{"method":"GET","url":"{{baseUrl}}/payments/{{paymentId}}"}},
+      {"name":"POST /payments/:paymentId/cancel","request":{"method":"POST","url":"{{baseUrl}}/payments/{{paymentId}}/cancel"}},
+      {"name":"POST /payments/:paymentId/refunds","request":{"method":"POST","url":"{{baseUrl}}/payments/{{paymentId}}/refunds"}},
+      {"name":"GET /payments/:paymentId/refunds","request":{"method":"GET","url":"{{baseUrl}}/payments/{{paymentId}}/refunds"}},
+      {"name":"GET /refunds/:refundId","request":{"method":"GET","url":"{{baseUrl}}/refunds/{{refundId}}"}}
+    ]}
+  ]
+}
