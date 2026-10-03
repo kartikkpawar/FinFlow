@@ -52,20 +52,14 @@ async function resolveMerchantRole(
       },
     );
   } catch {
-    throw new AppError(
-      STATUS_CODES.BAD_GATEWAY,
-      "Merchant service is unavailable",
-    );
+    throw new AppError(502, "Merchant service is unavailable");
   }
 
   if (!response.ok) {
     if (response.status === STATUS_CODES.FORBIDDEN) {
       throw new AppError(STATUS_CODES.FORBIDDEN, "Merchant access denied");
     }
-    throw new AppError(
-      STATUS_CODES.BAD_GATEWAY,
-      "Unable to resolve merchant access",
-    );
+    throw new AppError(502, "Unable to resolve merchant access");
   }
 
   const body = (await response.json()) as {
@@ -74,10 +68,7 @@ async function resolveMerchantRole(
   };
 
   if (!body.success || body.data?.merchantId !== merchantId || !body.data.role) {
-    throw new AppError(
-      STATUS_CODES.BAD_GATEWAY,
-      "Invalid merchant membership response",
-    );
+    throw new AppError(502, "Invalid merchant membership response");
   }
 
   return body.data.role;
