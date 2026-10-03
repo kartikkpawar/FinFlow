@@ -8,4 +8,20 @@ export function useMerchants(params: { page?: number; limit?: number; search?: s
 export function useMerchant(merchantId: string) { return useQuery({ queryKey: ["merchant", merchantId], queryFn: () => apiFetch<Merchant>(`/merchants/${merchantId}`), enabled: Boolean(merchantId) }); }
 export function useCreateMerchant() { const client = useQueryClient(); return useMutation({ mutationFn: (data: Pick<Merchant, "name" | "businessName" | "email" | "phone">) => apiFetch<Merchant>("/merchants", { method: "POST", data }), onSuccess: () => client.invalidateQueries({ queryKey: ["merchants"] }) }); }
 export function useUpdateMerchant(merchantId: number) { const client = useQueryClient(); return useMutation({ mutationFn: (data: Partial<Pick<Merchant, "name" | "businessName" | "email" | "phone">>) => apiFetch<Merchant>(`/merchants/${merchantId}`, { method: "PATCH", data }), onSuccess: () => { client.invalidateQueries({ queryKey: ["merchants"] }); client.invalidateQueries({ queryKey: ["merchant", String(merchantId)] }); } }); }
-export function useUpdateMerchantStatus(merchantId: number) { const client = useQueryClient(); return useMutation({ mutationFn: (status: MerchantStatus) => apiFetch<Merchant>(`/merchants/${merchantId}/status`, { method: "PATCH", data: { status } }), onSuccess: () => { client.invalidateQueries({ queryKey: ["merchants"] }); client.invalidateQueries({ queryKey: ["merchant", String(merchantId)] }); } }); }
+export function useUpdateMerchantStatus(merchantId: number) {
+  const client = useQueryClient();
+
+  return useMutation({
+    mutationFn: (status: MerchantStatus) =>
+      apiFetch<Merchant>(`/merchants/${merchantId}/status`, {
+        method: "PATCH",
+        data: { status },
+      }),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ["merchants"] });
+      client.invalidateQueries({
+        queryKey: ["merchant", String(merchantId)],
+      });
+    },
+  });
+}

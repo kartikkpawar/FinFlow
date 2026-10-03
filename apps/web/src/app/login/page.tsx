@@ -4,6 +4,11 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/auth-context";
+import { apiFetch } from "@/lib/api";
+
+type MerchantList = {
+  items: Array<{ id: number }>;
+};
 
 function EyeIcon({ visible }: { visible: boolean }) {
   if (visible) {
@@ -35,7 +40,15 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await login(email, password);
-      router.replace("/onboarding");
+      const merchants = await apiFetch<MerchantList>("/merchants?limit=100");
+
+      if (merchants.items.length === 0) {
+        router.replace("/onboarding");
+      } else if (merchants.items.length === 1) {
+        router.replace("/dashboard");
+      } else {
+        router.replace("/merchants");
+      }
     } finally {
       setSubmitting(false);
     }

@@ -1,6 +1,4 @@
-import "dotenv/config";
 import express from "express";
-import cors from "cors";
 import {
   errorHandler,
   httpLogger,
@@ -19,7 +17,6 @@ const app = express();
 config({ path: resolve(process.cwd(), ".env") });
 config({ path: resolve(process.cwd(), "../.env") });
 
-app.use(cors());
 app.use(express.json());
 app.use(httpLogger);
 
