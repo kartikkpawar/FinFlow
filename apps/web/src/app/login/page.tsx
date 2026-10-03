@@ -26,7 +26,7 @@ function EyeIcon({ visible }: { visible: boolean }) {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, token, loading: authLoading } = useAuth();
+  const { login, token, user, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -45,7 +45,7 @@ export default function LoginPage() {
 
     async function redirectAuthenticatedUser() {
       try {
-        const route = await getAuthenticatedRoute();
+        const route = await getAuthenticatedRoute(user);
         if (active) router.replace(route);
       } catch {
         if (active) setCheckingSession(false);
@@ -57,7 +57,7 @@ export default function LoginPage() {
     return () => {
       active = false;
     };
-  }, [authLoading, router, token]);
+  }, [authLoading, router, token, user]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -65,8 +65,8 @@ export default function LoginPage() {
 
     const authenticated = await safeApiRequest(async () => {
       await login(email, password);
-      router.replace(await getAuthenticatedRoute());
-      return true;
+      const route = await getAuthenticatedRoute({ role: "SUPER_ADMIN" } && undefined);
+      return route;
     });
 
     if (!authenticated) {
@@ -74,6 +74,7 @@ export default function LoginPage() {
       return;
     }
 
+    router.replace(authenticated);
     setSubmitting(false);
   }
 
@@ -107,34 +108,14 @@ export default function LoginPage() {
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-gray-700">Password</span>
                 <div className="relative">
-                  <input
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    type={showPassword ? "text" : "password"}
-                    required
-                    autoComplete="current-password"
-                    className="w-full rounded-lg border border-border px-3 py-2.5 pr-11 outline-none focus:border-brand focus:ring-2 focus:ring-blue-100"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((visible) => !visible)}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                    title={showPassword ? "Hide password" : "Show password"}
-                    className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-gray-500 transition hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-100"
-                  >
-                    <EyeIcon visible={showPassword} />
-                  </button>
+                  <input value={password} onChange={(event) => setPassword(event.target.value)} type={showPassword ? "text" : "password"} required autoComplete="current-password" className="w-full rounded-lg border border-border px-3 py-2.5 pr-11 outline-none focus:border-brand focus:ring-2 focus:ring-blue-100" />
+                  <button type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Hide password" : "Show password"} title={showPassword ? "Hide password" : "Show password"} className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-gray-500 transition hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-100"><EyeIcon visible={showPassword} /></button>
                 </div>
               </label>
-
-              <button disabled={submitting} className="w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
-                {submitting ? "Signing in..." : "Sign in"}
-              </button>
+              <button disabled={submitting} className="w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">{submitting ? "Signing in..." : "Sign in"}</button>
             </form>
 
-            <p className="mt-6 text-center text-sm text-muted">
-              New to FinFlow? <Link href="/signup" className="font-semibold text-brand hover:underline">Create an account</Link>
-            </p>
+            <p className="mt-6 text-center text-sm text-muted">New to FinFlow? <Link href="/signup" className="font-semibold text-brand hover:underline">Create an account</Link></p>
           </div>
         </section>
       </div>
