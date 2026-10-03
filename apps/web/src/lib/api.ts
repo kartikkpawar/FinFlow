@@ -1,6 +1,32 @@
 import axios, { AxiosError, type AxiosRequestConfig } from "axios";
 import { showToast } from "@/components/toast";
 
+type ApiErrorResponse = {
+  success?: boolean;
+  data?: {
+    message?: unknown;
+    tag?: unknown;
+  };
+};
+
+const GENERIC_API_ERROR_MESSAGE =
+  "Something went wrong. Please contact administrator";
+
+function getApiErrorMessage(error: AxiosError<ApiErrorResponse>): string {
+  const responseData = error.response?.data;
+
+  if (
+    responseData?.success === false &&
+    typeof responseData.data?.message === "string" &&
+    responseData.data.message.trim()
+  ) {
+    return responseData.data.message;
+  }
+
+  console.error("FinFlow API error:", error);
+  return GENERIC_API_ERROR_MESSAGE;
+}
+
 function getApiBaseUrl() {
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL;
@@ -36,7 +62,7 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (response) => response,
-  async (error: AxiosError<{ message?: string; error?: string }>) => {
+  async (error: AxiosError<ApiErrorResponse>) => {
     const originalRequest = error.config as
       | (AxiosRequestConfig & { _retry?: boolean })
       | undefined;
@@ -64,12 +90,7 @@ api.interceptors.response.use(
       }
     }
 
-    const message =
-      error.response?.data?.message ??
-      error.response?.data?.error ??
-      "Unable to connect to FinFlow API. Make sure the API Gateway is running on port 3001.";
-
-    showToast(message, "error");
+    showToast(getApiErrorMessage(error), "error");
     return Promise.reject(error);
   },
 );
