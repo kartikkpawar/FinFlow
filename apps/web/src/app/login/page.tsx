@@ -4,11 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/auth-context";
-import { apiFetch } from "@/lib/api";
-
-type MerchantList = {
-  items: Array<{ id: number }>;
-};
+import { getAuthenticatedRoute } from "@/features/auth/auth-routing";
 
 function EyeIcon({ visible }: { visible: boolean }) {
   if (visible) {
@@ -22,14 +18,14 @@ function EyeIcon({ visible }: { visible: boolean }) {
 
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true" className="h-5 w-5">
-      <path strokeLinecap="round" strokeLinejoin="round" d="m3 3 18 18M10.58 10.58a2 2 0 0 0 2.83 2.83M9.88 5.1A10.5 10.5 0 0 1 12 4.88c6.25 0 9.75 7.12 9.75 7.12a17.6 17.6 0 0 1-3.18 3.94M6.61 6.62C3.75 8.32 2.25 12 2.25 12s3.5 7.12 9.75 7.12a10.5 10.5 0 0 1 4.12-.82" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="m3 3 18 18M10.58 10.58a2 2 0 0 0 2.83 2.83M9.88 5.1A10.5 10.5 0 0 1 12 4.88c6.25 0 9.75 7.12 9.75 7.12a17.6 17.6 0 0 1-3.18 3.94M6.61 6.62C3.75 8.32 2.25 12 2.25 12s3.5 7.12 9.75 7.12 9.75-6 9.75-6-3.5-6-9.75-6S2.25 12 2.25 12Z" />
     </svg>
   );
 }
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, logout, token, loading: authLoading } = useAuth();
+  const { login, token, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -48,22 +44,10 @@ export default function LoginPage() {
 
     async function redirectAuthenticatedUser() {
       try {
-        const merchants = await apiFetch<MerchantList>("/merchants?limit=100");
-
-        if (!active) return;
-
-        if (merchants.items.length === 0) {
-          router.replace("/onboarding");
-        } else if (merchants.items.length === 1) {
-          router.replace("/dashboard");
-        } else {
-          router.replace("/merchants");
-        }
+        const route = await getAuthenticatedRoute();
+        if (active) router.replace(route);
       } catch {
-        if (active && !localStorage.getItem("finflow_access_token")) {
-          logout();
-          setCheckingSession(false);
-        }
+        if (active) setCheckingSession(false);
       }
     }
 
@@ -72,22 +56,14 @@ export default function LoginPage() {
     return () => {
       active = false;
     };
-  }, [authLoading, logout, router, token]);
+  }, [authLoading, router, token]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
     try {
       await login(email, password);
-      const merchants = await apiFetch<MerchantList>("/merchants?limit=100");
-
-      if (merchants.items.length === 0) {
-        router.replace("/onboarding");
-      } else if (merchants.items.length === 1) {
-        router.replace("/dashboard");
-      } else {
-        router.replace("/merchants");
-      }
+      router.replace(await getAuthenticatedRoute());
     } finally {
       setSubmitting(false);
     }
@@ -118,7 +94,7 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} className="mt-8 space-y-5">
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-gray-700">Email</span>
-                <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" required autoComplete="email" className="w-full rounded-lg border border-border px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-blue-100" />
+                <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" inputMode="email" required autoComplete="email" className="w-full rounded-lg border border-border px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-blue-100" />
               </label>
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-gray-700">Password</span>
