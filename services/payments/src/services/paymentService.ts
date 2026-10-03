@@ -141,3 +141,14 @@ export async function listPayments(input: ListPaymentsInput) {
   const totalNumber = Number(total);
   return { items, page: input.page, limit: input.limit, total: totalNumber, totalPages: Math.ceil(totalNumber / input.limit) };
 }
+
+export async function cancelPayment(paymentId: number, merchantId: number) {
+  return db.transaction(async (tx) => {
+    const [payment] = await tx.select().from(paymentsTable).where(and(eq(paymentsTable.id, paymentId), eq(paymentsTable.merchantId, merchantId))).limit(1);
+    if (!payment) throw new AppError(STATUS_CODES.NOT_FOUND, "Payment not found");
+    if (payment.status !== "PENDING") throw new AppError(STATUS_CODES.BAD_REQUEST, `Payment cannot be cancelled from ${payment.status}`);
+    const [updated] = await tx.update(paymentsTable).set({ status: "CANCELLED", cancelledAt: new Date(), updatedAt: new Date() }).where(eq(paymentsTable.id, paymentId)).returning();
+    await recordPaymentEvent(paymentId, "payment.cancelled", "PENDING", "CANCELLED", {}, tx);
+    return updated;
+  });
+}

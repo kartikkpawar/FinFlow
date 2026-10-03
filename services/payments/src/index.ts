@@ -10,6 +10,7 @@ import {
 } from "@finflow/shared";
 import { gatewayAuth } from "./middleware/gatewayAuth";
 import { paymentRoutes } from "./routes/paymentRoutes";
+import { refundRoutes } from "./routes/refundRoutes";
 
 config({ path: resolve(process.cwd(), ".env") });
 config({ path: resolve(process.cwd(), "../.env") });
@@ -24,6 +25,7 @@ app.get("/health", (_req, res) =>
   successResponse(res, { service: "payments-service" }),
 );
 app.use("/payments", gatewayAuth, paymentRoutes);
+app.use("/refunds", gatewayAuth, refundRoutes);
 
 app.use((_req, _res, next) => {
   next(new AppError(400, "Route Not Found"));
