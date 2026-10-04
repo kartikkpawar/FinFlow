@@ -37,6 +37,17 @@ type PlatformMerchantUserList = {
   totalPages: number;
 };
 
+function merchantHeaders(merchantId?: number) {
+  if (typeof window === "undefined") return undefined;
+
+  const activeMerchantId = merchantId ?? Number(window.localStorage.getItem("finflow_merchant_id"));
+  if (!Number.isSafeInteger(activeMerchantId) || activeMerchantId <= 0) {
+    return undefined;
+  }
+
+  return { "x-merchant-id": String(activeMerchantId) };
+}
+
 export function useMerchants(params: {
   page?: number;
   limit?: number;
@@ -50,16 +61,24 @@ export function useMerchants(params: {
   if (params.status) search.set("status", params.status);
   return useQuery({
     queryKey: ["merchants", params],
-    queryFn: () => apiFetch<MerchantList>(`/merchants?${search.toString()}`),
+    queryFn: () =>
+      apiFetch<MerchantList>(`/merchants?${search.toString()}`, {
+        headers: merchantHeaders(),
+      }),
   });
 }
+
 export function useMerchant(merchantId: string) {
   return useQuery({
     queryKey: ["merchant", merchantId],
-    queryFn: () => apiFetch<Merchant>(`/merchants/${merchantId}`),
+    queryFn: () =>
+      apiFetch<Merchant>(`/merchants/${merchantId}`, {
+        headers: merchantHeaders(Number(merchantId)),
+      }),
     enabled: Boolean(merchantId),
   });
 }
+
 export function useCreateMerchant() {
   const client = useQueryClient();
   return useMutation({
@@ -69,6 +88,7 @@ export function useCreateMerchant() {
     onSuccess: () => client.invalidateQueries({ queryKey: ["merchants"] }),
   });
 }
+
 export function useUpdateMerchant(merchantId: number) {
   const client = useQueryClient();
   return useMutation({
@@ -77,13 +97,18 @@ export function useUpdateMerchant(merchantId: number) {
         Pick<Merchant, "name" | "businessName" | "email" | "phone">
       >,
     ) =>
-      apiFetch<Merchant>(`/merchants/${merchantId}`, { method: "PATCH", data }),
+      apiFetch<Merchant>(`/merchants/${merchantId}`, {
+        method: "PATCH",
+        headers: merchantHeaders(merchantId),
+        data,
+      }),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ["merchants"] });
       client.invalidateQueries({ queryKey: ["merchant", String(merchantId)] });
     },
   });
 }
+
 export function useUpdateMerchantStatus(merchantId: number) {
   const client = useQueryClient();
 
@@ -91,6 +116,7 @@ export function useUpdateMerchantStatus(merchantId: number) {
     mutationFn: (status: MerchantStatus) =>
       apiFetch<Merchant>(`/merchants/${merchantId}/status`, {
         method: "PATCH",
+        headers: merchantHeaders(merchantId),
         data: { status },
       }),
     onSuccess: () => {
@@ -101,6 +127,7 @@ export function useUpdateMerchantStatus(merchantId: number) {
     },
   });
 }
+
 export function usePlatformMerchantUsers(params: {
   page?: number;
   limit?: number;
