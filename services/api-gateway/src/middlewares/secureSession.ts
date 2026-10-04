@@ -15,6 +15,8 @@ const IDENTITY_HEADERS = [
   "x-gateway-secret",
 ] as const;
 
+const PLATFORM_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "SUPPORT"]);
+
 function stripIdentityHeaders(req: Request) {
   for (const header of IDENTITY_HEADERS) {
     delete req.headers[header];
@@ -32,11 +34,55 @@ function getApiGatewaySecret(): string {
   return gatewaySecret;
 }
 
+function getPathMerchantId(req: Request) {
+  const path = req.originalUrl.split("?", 1)[0];
+  const match = path.match(/^\/merchants\/(\d+)(?:\/|$)/);
+  if (!match) return undefined;
+
+  const merchantId = Number(match[1]);
+  if (!Number.isSafeInteger(merchantId) || merchantId <= 0) {
+    throw new AppError(STATUS_CODES.BAD_REQUEST, "Invalid merchant context");
+  }
+  return merchantId;
+}
+
+function getMerchantId(req: Request) {
+  const rawMerchantId = req.headers["x-merchant-id"];
+  const headerMerchantId =
+    typeof rawMerchantId === "string" && rawMerchantId.trim()
+      ? Number(rawMerchantId)
+      : undefined;
+
+  if (
+    headerMerchantId !== undefined &&
+    (!Number.isSafeInteger(headerMerchantId) || headerMerchantId <= 0)
+  ) {
+    throw new AppError(STATUS_CODES.BAD_REQUEST, "Invalid merchant context");
+  }
+
+  const pathMerchantId = getPathMerchantId(req);
+
+  if (
+    headerMerchantId !== undefined &&
+    pathMerchantId !== undefined &&
+    headerMerchantId !== pathMerchantId
+  ) {
+    throw new AppError(
+      STATUS_CODES.BAD_REQUEST,
+      "Merchant context does not match the requested merchant",
+    );
+  }
+
+  return headerMerchantId ?? pathMerchantId;
+}
+
 async function resolveMerchantRole(
-  userId: number,
+  jwtUser: UserPayload,
   merchantId: number,
   gatewaySecret: string,
 ) {
+  if (PLATFORM_ROLES.has(jwtUser.role)) return jwtUser.role;
+
   const merchantsServiceUrl =
     process.env.MERCHANTS_SERVICE_URL || "http://localhost:3003";
   let response: globalThis.Response;
@@ -46,7 +92,7 @@ async function resolveMerchantRole(
       `${merchantsServiceUrl}/merchant-users/context?merchantId=${merchantId}`,
       {
         headers: {
-          "x-user-id": String(userId),
+          "x-user-id": String(jwtUser.userId),
           "x-gateway-secret": gatewaySecret,
         },
       },
@@ -72,18 +118,6 @@ async function resolveMerchantRole(
   }
 
   return body.data.role;
-}
-
-function getMerchantId(req: Request) {
-  const rawMerchantId = req.headers["x-merchant-id"];
-  if (Array.isArray(rawMerchantId)) return undefined;
-  if (typeof rawMerchantId !== "string" || !rawMerchantId.trim()) return undefined;
-
-  const merchantId = Number(rawMerchantId);
-  if (!Number.isInteger(merchantId) || merchantId <= 0) {
-    throw new AppError(STATUS_CODES.BAD_REQUEST, "Invalid merchant context");
-  }
-  return merchantId;
 }
 
 function addIdentityHeaders(
@@ -113,11 +147,7 @@ export const secureSession = asyncHandler(async (req, res, next) => {
   const merchantId = getMerchantId(req);
 
   if (merchantId !== undefined) {
-    const role = await resolveMerchantRole(
-      jwtUser.userId,
-      merchantId,
-      gatewaySecret,
-    );
+    const role = await resolveMerchantRole(jwtUser, merchantId, gatewaySecret);
     addIdentityHeaders(req, {
       ...jwtUser,
       role,
