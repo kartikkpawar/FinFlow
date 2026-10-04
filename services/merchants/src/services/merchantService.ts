@@ -56,7 +56,12 @@ async function merchantIdsForUser(userId: number) {
   const memberships = await db
     .select({ merchantId: merchantUsersTable.merchantId })
     .from(merchantUsersTable)
-    .where(eq(merchantUsersTable.userId, userId));
+    .where(
+      and(
+        eq(merchantUsersTable.userId, userId),
+        eq(merchantUsersTable.status, "ACTIVE"),
+      ),
+    );
   return memberships.map((membership) => membership.merchantId);
 }
 
@@ -69,6 +74,7 @@ async function assertMerchantScope(merchantId: number, identity: Identity) {
       and(
         eq(merchantUsersTable.merchantId, merchantId),
         eq(merchantUsersTable.userId, identity.userId),
+        eq(merchantUsersTable.status, "ACTIVE"),
       ),
     )
     .limit(1);
