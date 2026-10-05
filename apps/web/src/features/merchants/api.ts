@@ -40,7 +40,8 @@ type PlatformMerchantUserList = {
 function merchantHeaders(merchantId?: number) {
   if (typeof window === "undefined") return undefined;
 
-  const activeMerchantId = merchantId ?? Number(window.localStorage.getItem("finflow_merchant_id"));
+  const activeMerchantId =
+    merchantId ?? Number(window.localStorage.getItem("finflow_merchant_id"));
   if (!Number.isSafeInteger(activeMerchantId) || activeMerchantId <= 0) {
     return undefined;
   }
@@ -62,9 +63,7 @@ export function useMerchants(params: {
   return useQuery({
     queryKey: ["merchants", params],
     queryFn: () =>
-      apiFetch<MerchantList>(`/merchants?${search.toString()}`, {
-        headers: merchantHeaders(),
-      }),
+      apiFetch<MerchantList>(`/merchants?${search.toString()}`),
   });
 }
 
