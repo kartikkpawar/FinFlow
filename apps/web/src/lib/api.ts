@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 
 type ApiErrorResponse = {
   success?: boolean;
+  message?: unknown;
   data?: {
     message?: unknown;
     tag?: unknown;
@@ -18,6 +19,14 @@ const GENERIC_API_ERROR_MESSAGE =
 
 function getApiErrorMessage(error: AxiosError<ApiErrorResponse>): string {
   const responseData = error.response?.data;
+
+  if (
+    responseData?.success === false &&
+    typeof responseData.message === "string" &&
+    responseData.message.trim()
+  ) {
+    return responseData.message;
+  }
 
   if (
     responseData?.success === false &&
